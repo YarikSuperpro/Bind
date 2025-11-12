@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="50"
+   height="50"
+   viewBox="0 0 13.229166 13.229167"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.4.2 (f4327f4, 2025-05-13)"
+   sodipodi:docname="CheckmarkOff.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <title
+     id="title1">Checkmark_Off</title>
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="px"
+     inkscape:zoom="11.616723"
+     inkscape:cx="20.358582"
+     inkscape:cy="19.928168"
+     inkscape:window-width="1920"
+     inkscape:window-height="1017"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs1" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <path
+       id="rect1"
+       style="fill:#3f3f3f;fill-opacity:1;stroke-width:2.16958;stroke-linecap:round;stroke-linejoin:round;paint-order:fill markers stroke"
+       d="M 1.4350545 0 C 0.64012398 1.566648e-16 0 0.64012398 0 1.4350545 L 0 11.794112 C 1.566648e-16 12.589043 0.64012398 13.229166 1.4350545 13.229166 L 11.794112 13.229166 C 12.589043 13.229166 13.229166 12.589043 13.229166 11.794112 L 13.229166 1.4350545 C 13.229166 0.64012398 12.589043 0 11.794112 0 L 1.4350545 0 z M 2.0055623 0.72863769 L 11.223604 0.72863769 C 11.930944 0.72863769 12.500529 1.298222 12.500529 2.0055623 L 12.500529 11.223604 C 12.500529 11.930944 11.930944 12.500529 11.223604 12.500529 L 2.0055623 12.500529 C 1.298222 12.500529 0.72863769 11.930944 0.72863769 11.223604 L 0.72863769 2.0055623 C 0.72863769 1.298222 1.298222 0.72863769 2.0055623 0.72863769 z " />
+  </g>
+  <metadata
+     id="metadata1">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:title>Checkmark_Off</dc:title>
+        <dc:date>12th of November 2025</dc:date>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>Yarik_superpro</dc:title>
+          </cc:Agent>
+        </dc:creator>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+</svg>

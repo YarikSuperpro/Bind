@@ -1,9 +1,12 @@
 --!strict
 --!optimize 2
 
+local Selection = game:GetService("Selection")
+
 --Constants
 local UDim2_one_zero = UDim2.fromScale(1,0)
 local UDim2_zero = UDim2.fromScale(0,0)
+
 local UDim2_one = UDim2.fromScale(1,1)
 local UDim2_half = UDim2.fromScale(0.5,0.5)
 local UDim2_point_one = UDim2.fromScale(0.1,0.1)
@@ -52,8 +55,16 @@ end)
 
 local ScrollbarSize = 12
 --initialize
+local State_Open_WeldType:boolean = false
 
-local WeldOption_State:number = 1
+local _PluginData = plugin:GetSetting("Bind_YS_Data") or 62--int8
+local WeldOption_State:number = _PluginData//32
+local Option_SelectWelds:boolean = (_PluginData % 32)>=16
+local Option_PivotToOffset:boolean = (_PluginData % 16)>=8
+local Option_ParentWeldToBase:boolean = (_PluginData % 8)>=4
+local Option_NameWeldAsTarget:boolean = (_PluginData % 4)>=2
+local Option_DecentralizeWeld:boolean = (_PluginData % 2)>=1
+
 --[[
 1 = Motor6D
 2 = WeldConstraint
@@ -317,7 +328,24 @@ local WeldOptionsButton = Instance.new("TextButton") do
 	SetProperty(WeldOptionsButton,"FontFace",SourceSansPro)
 	SetProperty(WeldOptionsButton,"Name","WeldOptionsButton")
 	SetProperty(WeldOptionsButton,"Size",UDim2_one)
-	SetProperty(WeldOptionsButton,"Text","Motor6D")
+	
+	if WeldOption_State==1 then
+		SetProperty(WeldOptionsButton,"Text","Motor6D")
+	elseif WeldOption_State==2 then
+		SetProperty(WeldOptionsButton,"Text","WeldConstraint")
+	elseif WeldOption_State==3 then
+		SetProperty(WeldOptionsButton,"Text","Weld")
+	elseif WeldOption_State==4 then
+		SetProperty(WeldOptionsButton,"Text","ManualWeld")
+	elseif WeldOption_State==5 then
+		SetProperty(WeldOptionsButton,"Text","Snap")
+	elseif WeldOption_State==6 then
+		SetProperty(WeldOptionsButton,"Text","Glue")
+	elseif WeldOption_State==7 then
+		SetProperty(WeldOptionsButton,"Text","RotateV")
+	else
+		SetProperty(WeldOptionsButton,"Text","Rotate")
+	end
 	SetProperty(WeldOptionsButton,"TextColor3",Color3.new(0,0,0))
 	SetProperty(WeldOptionsButton,"TextScaled",true)
 	SetProperty(WeldOptionsButton,"TextSize",14)
@@ -387,7 +415,7 @@ SetProperty(Instance.new("UICorner",WeldOptions),"CornerRadius",UDim2_0_5px)
 7 = RotateV
 8 = Rotate
 ]]
-local wo_sz_cache_scrollbar = UDim2.new(1,-12,0,25)
+local wo_sz_cache_scrollbar = UDim2.new(1,-ScrollbarSize,0,25)
 local wo_sz_cache_free = UDim2.new(1,0,0,25)
 --Quick cache^
 local WO_Motor6D = Instance.new("TextButton") do
@@ -403,6 +431,7 @@ local WO_Motor6D = Instance.new("TextButton") do
 		SetProperty(WeldOptionsButton,"Text","Motor6D")
 		SetProperty(CancelCorneringEffect,"Visible",false)
 		SetProperty(WeldOptions_Frame,"Visible",false)
+		State_Open_WeldType=false
 	end)
 	SetProperty(WO_Motor6D,"Parent",WeldOptions)
 end
@@ -420,6 +449,7 @@ local WO_WeldConstraint = Instance.new("TextButton") do
 		SetProperty(WeldOptionsButton,"Text","WeldConstraint")
 		SetProperty(CancelCorneringEffect,"Visible",false)
 		SetProperty(WeldOptions_Frame,"Visible",false)
+		State_Open_WeldType=false
 	end)
 	SetProperty(WO_WeldConstraint,"Parent",WeldOptions)
 end
@@ -437,6 +467,7 @@ local WO_Weld = Instance.new("TextButton") do
 		SetProperty(WeldOptionsButton,"Text","Weld")
 		SetProperty(CancelCorneringEffect,"Visible",false)
 		SetProperty(WeldOptions_Frame,"Visible",false)
+		State_Open_WeldType=false
 	end)
 	SetProperty(WO_Weld,"Parent",WeldOptions)
 end
@@ -455,6 +486,7 @@ local WO_ManualWeld = Instance.new("TextButton") do
 		SetProperty(WeldOptionsButton,"Text","ManualWeld")
 		SetProperty(CancelCorneringEffect,"Visible",false)
 		SetProperty(WeldOptions_Frame,"Visible",false)
+		State_Open_WeldType=false
 	end)
 	SetProperty(WO_ManualWeld,"Parent",WeldOptions)
 end
@@ -473,6 +505,7 @@ local WO_Snap = Instance.new("TextButton") do
 		SetProperty(WeldOptionsButton,"Text","Snap")
 		SetProperty(CancelCorneringEffect,"Visible",false)
 		SetProperty(WeldOptions_Frame,"Visible",false)
+		State_Open_WeldType=false
 	end)
 	SetProperty(WO_Snap,"Parent",WeldOptions)
 end
@@ -491,6 +524,7 @@ local WO_Glue = Instance.new("TextButton") do
 		SetProperty(WeldOptionsButton,"Text","Glue")
 		SetProperty(CancelCorneringEffect,"Visible",false)
 		SetProperty(WeldOptions_Frame,"Visible",false)
+		State_Open_WeldType=false	
 	end)
 	SetProperty(WO_Glue,"Parent",WeldOptions)
 end
@@ -509,6 +543,7 @@ local WO_RotateV = Instance.new("TextButton") do
 		SetProperty(WeldOptionsButton,"Text","RotateV")
 		SetProperty(CancelCorneringEffect,"Visible",false)
 		SetProperty(WeldOptions_Frame,"Visible",false)
+		State_Open_WeldType=false
 	end)
 	SetProperty(WO_RotateV,"Parent",WeldOptions)
 end
@@ -527,6 +562,7 @@ local WO_Rotate = Instance.new("TextButton") do
 		SetProperty(WeldOptionsButton,"Text","Rotate")
 		SetProperty(CancelCorneringEffect,"Visible",false)
 		SetProperty(WeldOptions_Frame,"Visible",false)
+		State_Open_WeldType=false
 	end)
 	SetProperty(WO_Rotate,"Parent",WeldOptions)
 end
@@ -586,11 +622,15 @@ local ImageButton_2 = Instance.new("ImageButton") do
 	SetProperty(ImageButton_2,"BackgroundColor3",Color3.new(0.369,0.369,0.369))
 	SetProperty(ImageButton_2,"BorderColor3",Color3.new(0,0,0))
 	SetProperty(ImageButton_2,"BorderSizePixel",0)
-	SetProperty(ImageButton_2,"Image","rbxassetid://131950065573162")
+	SetProperty(ImageButton_2,"Image",Option_PivotToOffset==true and "rbxassetid://131950065573162" or "rbxassetid://78966475852487")
 	SetProperty(ImageButton_2,"ImageColor3",Color3.new(0.867,0.867,0.867))
 	SetProperty(ImageButton_2,"Position",UDim2_half)
 	SetProperty(ImageButton_2,"Size",UDim2_0_9)
 	SetProperty(ImageButton_2,"ZIndex",4)
+	Connect(GetProperty(ImageButton_2,"MouseButton1Click")::RBXScriptSignal,function():()
+		Option_PivotToOffset = not Option_PivotToOffset
+		SetProperty(ImageButton_2,"Image",Option_PivotToOffset==true and "rbxassetid://131950065573162" or "rbxassetid://78966475852487")
+	end)
 	SetProperty(ImageButton_2,"Parent",ButtonSplit)
 end
 --[Children] {
@@ -635,11 +675,15 @@ local ImageButton_3 = Instance.new("ImageButton") do
 	SetProperty(ImageButton_3,"BackgroundColor3",Color3.new(0.369,0.369,0.369))
 	SetProperty(ImageButton_3,"BorderColor3",Color3.new(0,0,0))
 	SetProperty(ImageButton_3,"BorderSizePixel",0)
-	SetProperty(ImageButton_3,"Image","rbxassetid://131950065573162")
+	SetProperty(ImageButton_3,"Image",Option_ParentWeldToBase==true and "rbxassetid://131950065573162" or "rbxassetid://78966475852487")
 	SetProperty(ImageButton_3,"ImageColor3",Color3.new(0.867,0.867,0.867))
 	SetProperty(ImageButton_3,"Position",UDim2_half)
 	SetProperty(ImageButton_3,"Size",UDim2_0_9)
 	SetProperty(ImageButton_3,"ZIndex",4)
+	Connect(GetProperty(ImageButton_3,"MouseButton1Click")::RBXScriptSignal,function():()
+		Option_ParentWeldToBase = not Option_ParentWeldToBase
+		SetProperty(ImageButton_3,"Image",Option_ParentWeldToBase==true and "rbxassetid://131950065573162" or "rbxassetid://78966475852487")
+	end)
 	SetProperty(ImageButton_3,"Parent",ButtonSplit_1)
 end
 --[Children] {
@@ -700,11 +744,15 @@ local ImageButton_4 = Instance.new("ImageButton") do
 	SetProperty(ImageButton_4,"BackgroundColor3",Color3.new(0.369,0.369,0.369))
 	SetProperty(ImageButton_4,"BorderColor3",Color3.new(0,0,0))
 	SetProperty(ImageButton_4,"BorderSizePixel",0)
-	SetProperty(ImageButton_4,"Image","rbxassetid://131950065573162")
+	SetProperty(ImageButton_4,"Image",Option_NameWeldAsTarget==true and "rbxassetid://131950065573162" or "rbxassetid://78966475852487")
 	SetProperty(ImageButton_4,"ImageColor3",Color3.new(0.867,0.867,0.867))
 	SetProperty(ImageButton_4,"Position",UDim2_half)
 	SetProperty(ImageButton_4,"Size",UDim2_0_9)
 	SetProperty(ImageButton_4,"ZIndex",4)
+	Connect(GetProperty(ImageButton_4,"MouseButton1Click")::RBXScriptSignal,function():()
+		Option_NameWeldAsTarget = not Option_NameWeldAsTarget
+		SetProperty(ImageButton_4,"Image",Option_NameWeldAsTarget==true and "rbxassetid://131950065573162" or "rbxassetid://78966475852487")
+	end)
 	SetProperty(ImageButton_4,"Parent",ButtonSplit_2)
 end
 --[Children] {
@@ -766,11 +814,15 @@ local ImageButton_5 = Instance.new("ImageButton") do
 	SetProperty(ImageButton_5,"BackgroundColor3",Color3.new(0.369,0.369,0.369))
 	SetProperty(ImageButton_5,"BorderColor3",Color3.new(0,0,0))
 	SetProperty(ImageButton_5,"BorderSizePixel",0)
-	SetProperty(ImageButton_5,"Image","rbxassetid://78966475852487")
+	SetProperty(ImageButton_5,"Image",Option_DecentralizeWeld==true and "rbxassetid://131950065573162" or "rbxassetid://78966475852487")
 	SetProperty(ImageButton_5,"ImageColor3",Color3.new(0.867,0.867,0.867))
 	SetProperty(ImageButton_5,"Position",UDim2_half)
 	SetProperty(ImageButton_5,"Size",UDim2_0_9)
 	SetProperty(ImageButton_5,"ZIndex",4)
+	Connect(GetProperty(ImageButton_5,"MouseButton1Click")::RBXScriptSignal,function():()
+		Option_DecentralizeWeld = not Option_DecentralizeWeld
+		SetProperty(ImageButton_5,"Image",Option_DecentralizeWeld==true and "rbxassetid://131950065573162" or "rbxassetid://78966475852487")
+	end)
 	SetProperty(ImageButton_5,"Parent",ButtonSplit_3)
 end
 --[Children] {
@@ -834,12 +886,16 @@ local SelectWelds_Button = Instance.new("ImageButton") do
 	SetProperty(SelectWelds_Button,"BackgroundColor3",Color3.new(0.369,0.369,0.369))
 	SetProperty(SelectWelds_Button,"BorderColor3",Color3.new(0,0,0))
 	SetProperty(SelectWelds_Button,"BorderSizePixel",0)
-	SetProperty(SelectWelds_Button,"Image","rbxassetid://131950065573162")
+	SetProperty(SelectWelds_Button,"Image",Option_SelectWelds==true and "rbxassetid://131950065573162" or "rbxassetid://78966475852487")
 	SetProperty(SelectWelds_Button,"ImageColor3",Color3.new(0.867,0.867,0.867))
 	SetProperty(SelectWelds_Button,"Name","SelectWelds_Button")
 	SetProperty(SelectWelds_Button,"Position",UDim2.new(0.6,0,0.905,0))
 	SetProperty(SelectWelds_Button,"Size",UDim20__20__0__20)
 	SetProperty(SelectWelds_Button,"ZIndex",2)
+	Connect(GetProperty(SelectWelds_Button,"MouseButton1Click")::RBXScriptSignal,function():()
+		Option_SelectWelds = not Option_SelectWelds
+		SetProperty(SelectWelds_Button,"Image",Option_SelectWelds==true and "rbxassetid://131950065573162" or "rbxassetid://78966475852487")
+	end)
 	SetProperty(SelectWelds_Button,"Parent",Main)
 end
 local SelectWelds = Instance.new("TextLabel") do
@@ -889,6 +945,13 @@ WeldOptions:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateWeldOptions_L
 UpdateWeldOptions_List()
 
 Connect(GetProperty(WeldOptionsButton,"MouseButton1Click")::RBXScriptSignal,function():()
+	if State_Open_WeldType==true then
+		SetProperty(CancelCorneringEffect,"Visible",false)
+		SetProperty(WeldOptions_Frame,"Visible",false)
+		State_Open_WeldType=false
+		return
+	end
+	State_Open_WeldType=true
 	SetProperty(CancelCorneringEffect,"Visible",true)
 	SetProperty(WeldOptions_Frame,"Visible",true)
 end)
@@ -896,7 +959,7 @@ end)
 
 --theme
 local Studio = GetProperty((settings::any)(),"Studio")::Studio
-local Theme:StudioTheme = Studio.Theme::StudioTheme
+local Theme:StudioTheme = GetProperty(Studio,"Theme")::StudioTheme
 local GetColor = GetProperty(Theme,"GetColor")::(Theme:StudioTheme,styleguideitem: Enum.StudioStyleGuideColor,modifier: Enum.StudioStyleGuideModifier?)->Color3
 local Dark = GetColor(Theme,Enum.StudioStyleGuideColor.Dark)
 local BrightText = GetColor(Theme,Enum.StudioStyleGuideColor.BrightText)
@@ -904,6 +967,9 @@ local ScrollBar_Color = GetColor(Theme,Enum.StudioStyleGuideColor.ScrollBar)
 local ScrollBar_Color_BACKGROUND = GetColor(Theme,Enum.StudioStyleGuideColor.ScrollBarBackground)
 local Border_Color = GetColor(Theme,Enum.StudioStyleGuideColor.Mid)
 local Tab_Color = GetColor(Theme,Enum.StudioStyleGuideColor.Tab)
+local MainBackground = GetColor(Theme,Enum.StudioStyleGuideColor.MainBackground)
+SetProperty(Main,"BackgroundColor3",MainBackground)
+
 SetProperty(L_PivotToOffset,"BackgroundColor3",Tab_Color)
 SetProperty(L_ParentToBase,"BackgroundColor3",Tab_Color)
 SetProperty(R_NameAsTarget,"BackgroundColor3",Tab_Color)
@@ -950,11 +1016,18 @@ SetProperty(WO_RotateV,"TextColor3",BrightText)
 SetProperty(WO_Rotate,"BackgroundColor3",Dark)
 SetProperty(WO_Rotate,"TextColor3",BrightText)
 local gc = Connect(GetProperty(Studio,"ThemeChanged")::RBXScriptSignal,function():()
-	Theme = Studio.Theme::StudioTheme
+	Theme = GetProperty(Studio,"Theme")::StudioTheme
 end)
 
 ;(GetProperty(plugin,"Unloading")::RBXScriptSignal):Once(function():()
 	gc:Disconnect()
+	local pack = (WeldOption_State * 32)
+		+ (Option_SelectWelds and 16 or 0)
+		+ (Option_PivotToOffset and 8 or 0)
+		+ (Option_ParentWeldToBase and 4 or 0)
+		+ (Option_NameWeldAsTarget and 2 or 0)
+		+ (Option_DecentralizeWeld and 1 or 0)
+	plugin:SetSetting("Bind_YS_Data",pack)
 end)
 
 

@@ -307,6 +307,7 @@ local CancelCorneringEffect = Instance.new("Frame") do
 	SetProperty(CancelCorneringEffect,"Selectable",true)
 	SetProperty(CancelCorneringEffect,"Size",UDim2_1__0__0__5)
 	SetProperty(CancelCorneringEffect,"ZIndex",7)
+	SetProperty(CancelCorneringEffect,"Visible",false)
 	SetProperty(CancelCorneringEffect,"Parent",WeldOptionsButton_Frame)
 end
 local WeldOptionsButton = Instance.new("TextButton") do
@@ -344,6 +345,7 @@ local WeldOptions_Frame = Instance.new("Frame") do
 	SetProperty(WeldOptions_Frame,"SelectionGroup",true)
 	SetProperty(WeldOptions_Frame,"Size",UDim2.fromScale(0.2,0.613))
 	SetProperty(WeldOptions_Frame,"ZIndex",2)
+	SetProperty(WeldOptions_Frame,"Visible",false)
 	SetProperty(WeldOptions_Frame,"Parent",Main)
 end
 --[Children] {
@@ -399,6 +401,8 @@ local WO_Motor6D = Instance.new("TextButton") do
 	Connect(GetProperty(WO_Motor6D,"MouseButton1Click")::RBXScriptSignal,function():()
 		WeldOption_State = 1
 		SetProperty(WeldOptionsButton,"Text","Motor6D")
+		SetProperty(CancelCorneringEffect,"Visible",false)
+		SetProperty(WeldOptions_Frame,"Visible",false)
 	end)
 	SetProperty(WO_Motor6D,"Parent",WeldOptions)
 end
@@ -414,6 +418,8 @@ local WO_WeldConstraint = Instance.new("TextButton") do
 	Connect(GetProperty(WO_WeldConstraint,"MouseButton1Click")::RBXScriptSignal,function():()
 		WeldOption_State = 2
 		SetProperty(WeldOptionsButton,"Text","WeldConstraint")
+		SetProperty(CancelCorneringEffect,"Visible",false)
+		SetProperty(WeldOptions_Frame,"Visible",false)
 	end)
 	SetProperty(WO_WeldConstraint,"Parent",WeldOptions)
 end
@@ -429,6 +435,8 @@ local WO_Weld = Instance.new("TextButton") do
 	Connect(GetProperty(WO_Weld,"MouseButton1Click")::RBXScriptSignal,function():()
 		WeldOption_State = 3
 		SetProperty(WeldOptionsButton,"Text","Weld")
+		SetProperty(CancelCorneringEffect,"Visible",false)
+		SetProperty(WeldOptions_Frame,"Visible",false)
 	end)
 	SetProperty(WO_Weld,"Parent",WeldOptions)
 end
@@ -445,6 +453,8 @@ local WO_ManualWeld = Instance.new("TextButton") do
 	Connect(GetProperty(WO_ManualWeld,"MouseButton1Click")::RBXScriptSignal,function():()
 		WeldOption_State = 4
 		SetProperty(WeldOptionsButton,"Text","ManualWeld")
+		SetProperty(CancelCorneringEffect,"Visible",false)
+		SetProperty(WeldOptions_Frame,"Visible",false)
 	end)
 	SetProperty(WO_ManualWeld,"Parent",WeldOptions)
 end
@@ -461,6 +471,8 @@ local WO_Snap = Instance.new("TextButton") do
 	Connect(GetProperty(WO_Snap,"MouseButton1Click")::RBXScriptSignal,function():()
 		WeldOption_State = 5
 		SetProperty(WeldOptionsButton,"Text","Snap")
+		SetProperty(CancelCorneringEffect,"Visible",false)
+		SetProperty(WeldOptions_Frame,"Visible",false)
 	end)
 	SetProperty(WO_Snap,"Parent",WeldOptions)
 end
@@ -477,6 +489,8 @@ local WO_Glue = Instance.new("TextButton") do
 	Connect(GetProperty(WO_Glue,"MouseButton1Click")::RBXScriptSignal,function():()
 		WeldOption_State = 6
 		SetProperty(WeldOptionsButton,"Text","Glue")
+		SetProperty(CancelCorneringEffect,"Visible",false)
+		SetProperty(WeldOptions_Frame,"Visible",false)
 	end)
 	SetProperty(WO_Glue,"Parent",WeldOptions)
 end
@@ -493,6 +507,8 @@ local WO_RotateV = Instance.new("TextButton") do
 	Connect(GetProperty(WO_RotateV,"MouseButton1Click")::RBXScriptSignal,function():()
 		WeldOption_State = 7
 		SetProperty(WeldOptionsButton,"Text","RotateV")
+		SetProperty(CancelCorneringEffect,"Visible",false)
+		SetProperty(WeldOptions_Frame,"Visible",false)
 	end)
 	SetProperty(WO_RotateV,"Parent",WeldOptions)
 end
@@ -509,6 +525,8 @@ local WO_Rotate = Instance.new("TextButton") do
 	Connect(GetProperty(WO_Rotate,"MouseButton1Click")::RBXScriptSignal,function():()
 		WeldOption_State = 8
 		SetProperty(WeldOptionsButton,"Text","Rotate")
+		SetProperty(CancelCorneringEffect,"Visible",false)
+		SetProperty(WeldOptions_Frame,"Visible",false)
 	end)
 	SetProperty(WO_Rotate,"Parent",WeldOptions)
 end
@@ -561,7 +579,8 @@ local ButtonSplit = Instance.new("Frame") do
 	SetProperty(ButtonSplit,"Parent",L_PivotToOffset)
 end
 --[Children] {
-SetProperty(Instance.new("UIStroke",ButtonSplit),"ApplyStrokeMode",Enum.ApplyStrokeMode.Border)
+local UIStroke_3 = Instance.new("UIStroke",ButtonSplit)
+SetProperty(UIStroke_3,"ApplyStrokeMode",Enum.ApplyStrokeMode.Border)
 local ImageButton_2 = Instance.new("ImageButton") do
 	SetProperty(ImageButton_2,"AnchorPoint",Vector2_Half)
 	SetProperty(ImageButton_2,"BackgroundColor3",Color3.new(0.369,0.369,0.369))
@@ -578,8 +597,8 @@ end
 local UIAspectRatioConstraint = Instance.new("UIAspectRatioConstraint",ImageButton_2)
 --}
 --}
-
-SetProperty(Instance.new("UIStroke",L_PivotToOffset),"ApplyStrokeMode",Enum.ApplyStrokeMode.Border)
+local UIStroke_4 = Instance.new("UIStroke",L_PivotToOffset)
+SetProperty(UIStroke_4,"ApplyStrokeMode",Enum.ApplyStrokeMode.Border)
 
 --}
 local L_ParentToBase = Instance.new("Frame") do
@@ -593,7 +612,8 @@ local L_ParentToBase = Instance.new("Frame") do
 	SetProperty(L_ParentToBase,"Parent",Main)
 end
 --[Children] {
-SetProperty(Instance.new("UIStroke",L_ParentToBase),"ApplyStrokeMode",Enum.ApplyStrokeMode.Border)
+local UIStroke_5 = Instance.new("UIStroke",L_ParentToBase)
+SetProperty(UIStroke_5,"ApplyStrokeMode",Enum.ApplyStrokeMode.Border)
 local ButtonSplit_1 = Instance.new("Frame") do
 	SetProperty(ButtonSplit_1,"AnchorPoint",Vector2.xAxis)
 	SetProperty(ButtonSplit_1,"BackgroundColor3",Color3.new(1,1,1))
@@ -608,7 +628,8 @@ local ButtonSplit_1 = Instance.new("Frame") do
 	SetProperty(ButtonSplit_1,"Parent",L_ParentToBase)
 end
 --[Children] {
-SetProperty(Instance.new("UIStroke",ButtonSplit_1),"ApplyStrokeMode",Enum.ApplyStrokeMode.Border)
+local UIStroke_6 = Instance.new("UIStroke",ButtonSplit_1)
+SetProperty(UIStroke_6,"ApplyStrokeMode",Enum.ApplyStrokeMode.Border)
 local ImageButton_3 = Instance.new("ImageButton") do
 	SetProperty(ImageButton_3,"AnchorPoint",Vector2_Half)
 	SetProperty(ImageButton_3,"BackgroundColor3",Color3.new(0.369,0.369,0.369))
@@ -656,7 +677,8 @@ local R_NameAsTarget = Instance.new("Frame") do
 	SetProperty(R_NameAsTarget,"Parent",Main)
 end
 --[Children] {
-SetProperty(Instance.new("UIStroke",R_NameAsTarget),"ApplyStrokeMode",Enum.ApplyStrokeMode.Border)
+local UIStroke_7 = Instance.new("UIStroke",R_NameAsTarget)
+SetProperty(UIStroke_7,"ApplyStrokeMode",Enum.ApplyStrokeMode.Border)
 local ButtonSplit_2 = Instance.new("Frame") do
 	SetProperty(ButtonSplit_2,"AnchorPoint",Vector2.xAxis)
 	SetProperty(ButtonSplit_2,"BackgroundColor3",Color3.new(1,1,1))
@@ -671,7 +693,8 @@ local ButtonSplit_2 = Instance.new("Frame") do
 	SetProperty(ButtonSplit_2,"Parent",R_NameAsTarget)
 end
 --[Children] {
-SetProperty(Instance.new("UIStroke",ButtonSplit_2),"ApplyStrokeMode",Enum.ApplyStrokeMode.Border)
+local UIStroke_8 = Instance.new("UIStroke",ButtonSplit_2)
+SetProperty(UIStroke_8,"ApplyStrokeMode",Enum.ApplyStrokeMode.Border)
 local ImageButton_4 = Instance.new("ImageButton") do
 	SetProperty(ImageButton_4,"AnchorPoint",Vector2_Half)
 	SetProperty(ImageButton_4,"BackgroundColor3",Color3.new(0.369,0.369,0.369))
@@ -719,7 +742,8 @@ local R_ChainLink = Instance.new("Frame") do
 	SetProperty(R_ChainLink,"Parent",Main)
 end
 --[Children] {
-SetProperty(Instance.new("UIStroke",R_ChainLink),"ApplyStrokeMode",Enum.ApplyStrokeMode.Border)
+local UIStroke_9 = Instance.new("UIStroke",R_ChainLink)
+SetProperty(UIStroke_9,"ApplyStrokeMode",Enum.ApplyStrokeMode.Border)
 
 local ButtonSplit_3 = Instance.new("Frame") do
 	SetProperty(ButtonSplit_3,"AnchorPoint",Vector2.xAxis)
@@ -735,7 +759,8 @@ local ButtonSplit_3 = Instance.new("Frame") do
 	SetProperty(ButtonSplit_3,"Parent",R_ChainLink)
 end
 --[Children] {
-SetProperty(Instance.new("UIStroke",ButtonSplit_3),"ApplyStrokeMode",Enum.ApplyStrokeMode.Border)
+local UIStroke_10 = Instance.new("UIStroke",ButtonSplit_3)
+SetProperty(UIStroke_10,"ApplyStrokeMode",Enum.ApplyStrokeMode.Border)
 local ImageButton_5 = Instance.new("ImageButton") do
 	SetProperty(ImageButton_5,"AnchorPoint",Vector2_Half)
 	SetProperty(ImageButton_5,"BackgroundColor3",Color3.new(0.369,0.369,0.369))
@@ -863,6 +888,12 @@ end
 WeldOptions:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateWeldOptions_List)
 UpdateWeldOptions_List()
 
+Connect(GetProperty(WeldOptionsButton,"MouseButton1Click")::RBXScriptSignal,function():()
+	SetProperty(CancelCorneringEffect,"Visible",true)
+	SetProperty(WeldOptions_Frame,"Visible",true)
+end)
+
+
 --theme
 local Studio = GetProperty((settings::any)(),"Studio")::Studio
 local Theme:StudioTheme = Studio.Theme::StudioTheme
@@ -871,7 +902,31 @@ local Dark = GetColor(Theme,Enum.StudioStyleGuideColor.Dark)
 local BrightText = GetColor(Theme,Enum.StudioStyleGuideColor.BrightText)
 local ScrollBar_Color = GetColor(Theme,Enum.StudioStyleGuideColor.ScrollBar)
 local ScrollBar_Color_BACKGROUND = GetColor(Theme,Enum.StudioStyleGuideColor.ScrollBarBackground)
+local Border_Color = GetColor(Theme,Enum.StudioStyleGuideColor.Mid)
+local Tab_Color = GetColor(Theme,Enum.StudioStyleGuideColor.Tab)
+SetProperty(L_PivotToOffset,"BackgroundColor3",Tab_Color)
+SetProperty(L_ParentToBase,"BackgroundColor3",Tab_Color)
+SetProperty(R_NameAsTarget,"BackgroundColor3",Tab_Color)
+SetProperty(R_ChainLink,"BackgroundColor3",Tab_Color)
 
+SetProperty(TextLabel_2,"TextColor3",BrightText)
+SetProperty(TextLabel_3,"TextColor3",BrightText)
+SetProperty(TextLabel_4,"TextColor3",BrightText)
+SetProperty(TextLabel_5,"TextColor3",BrightText)
+SetProperty(WeldOptionsButton,"TextColor3",BrightText)
+
+
+SetProperty(UIStroke,"Color",Border_Color)
+SetProperty(UIStroke_1,"Color",Border_Color)
+SetProperty(UIStroke_2,"Color",Border_Color)
+SetProperty(UIStroke_3,"Color",Border_Color)
+SetProperty(UIStroke_4,"Color",Border_Color)
+SetProperty(UIStroke_5,"Color",Border_Color)
+SetProperty(UIStroke_6,"Color",Border_Color)
+SetProperty(UIStroke_7,"Color",Border_Color)
+SetProperty(UIStroke_8,"Color",Border_Color)
+SetProperty(UIStroke_9,"Color",Border_Color)
+SetProperty(UIStroke_10,"Color",Border_Color)
 SetProperty(Base,"BackgroundColor3",ScrollBar_Color_BACKGROUND)
 SetProperty(WeldOptions,"BackgroundColor3",ScrollBar_Color_BACKGROUND)
 SetProperty(Targets,"BackgroundColor3",ScrollBar_Color_BACKGROUND)
@@ -894,10 +949,11 @@ SetProperty(WO_RotateV,"BackgroundColor3",Dark)
 SetProperty(WO_RotateV,"TextColor3",BrightText)
 SetProperty(WO_Rotate,"BackgroundColor3",Dark)
 SetProperty(WO_Rotate,"TextColor3",BrightText)
-local gc = Studio.ThemeChanged:Connect(function():()
+local gc = Connect(GetProperty(Studio,"ThemeChanged")::RBXScriptSignal,function():()
 	Theme = Studio.Theme::StudioTheme
 end)
-plugin.Unloading:Once(function():()
+
+;(GetProperty(plugin,"Unloading")::RBXScriptSignal):Once(function():()
 	gc:Disconnect()
 end)
 

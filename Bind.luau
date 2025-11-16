@@ -2,11 +2,18 @@
 --!optimize 2
 
 local Selection = game:GetService("Selection")
+local Selection_Get:(Selection:Selection)->{Instance}
+local Instances_temp = {}::{Instance}
+local Selection_Ins = {}::{Instance}
+local BrightText_Stack = {}::{[TextLabel]:true}
+local Connection_Trace = {}::{[Frame]:TextLabel}
 
 --Constants
 local UDim2_one_zero = UDim2.fromScale(1,0)
 local UDim2_zero = UDim2.fromScale(0,0)
+local Red_Default_Color = Color3.fromRGB(196,49,81)
 
+local UDim2_One_Half = UDim2.fromScale(1,0.5)
 local UDim2_one = UDim2.fromScale(1,1)
 local UDim2_half = UDim2.fromScale(0.5,0.5)
 local UDim2_point_one = UDim2.fromScale(0.1,0.1)
@@ -22,6 +29,7 @@ local UDim2_1__u40__1__0 = UDim2.new(1,-40,1,0)
 local UDim2_new0_2__0__0_083__0 = UDim2.fromScale(0.2,0.083)
 local UDim2_0_3__0_5 = UDim2.fromScale(0.3,0.5)
 local UDim2_1__u12__0__20 = UDim2.new(1,-12,0,20)
+local UDim2_1__u12__0__20_NoScrollBar = UDim2.new(1,0,0,20)
 local UDim_1_0 = UDim.new(1,0)
 local UDim20__20__0__20 = UDim2.fromOffset(20,20)
 local UDim2_1__0__0__5 = UDim2.new(1,0,0,5)
@@ -31,11 +39,17 @@ local UDim20_3__u10__0_1__0 = UDim2.new(0.3,-10,0.1,0)
 local UDim2_1__u30__1__0 = UDim2.new(1,-30,1,0)
 local UDim2_5__0 = UDim2.fromOffset(5,0)
 local UDim2_0_9 = UDim2.fromScale(0.9,0.9)
+local UDim2_15__15 = UDim2.fromOffset(15,15)
+local UDim2_25__0 = UDim2.fromOffset(25,0)
 --Instance metamethods
 local SetProperty:(ins:Instance,prop:string,val:any)->()
 local GetProperty:(ins:Instance|RBXScriptSignal,prop:string)->any
 local GetVector2:(vec:Vector2,val:"X"|"Y")->number
 local Connect:<A>(signal:RBXScriptSignal,func:A)->RBXScriptConnection
+local GetPropertyChangedSignal:(ins:Instance,property: string)->RBXScriptSignal
+local Disconnect:(Connection:RBXScriptConnection)->()
+local Destroy:(ins:Instance)->()
+local IsA:(ins:Instance,class:string)->boolean
 xpcall(function():()
 	(game::any)[nil]=nil
 end,function():()
@@ -47,6 +61,10 @@ end,function():()
 	GetProperty = debug.info(2,"f")
 end)
 Connect = (GetProperty(plugin,"Unloading")::any).Connect
+GetPropertyChangedSignal = GetProperty(plugin,"GetPropertyChangedSignal")
+Selection_Get = GetProperty(Selection,"Get")
+Destroy = GetProperty(plugin,"Destroy")
+IsA = GetProperty(plugin,"IsA")
 xpcall(function():()
 	return (Vector2.zero::any)[nil]
 end,function():()
@@ -64,18 +82,6 @@ local Option_PivotToOffset:boolean = (_PluginData % 16)>=8
 local Option_ParentWeldToBase:boolean = (_PluginData % 8)>=4
 local Option_NameWeldAsTarget:boolean = (_PluginData % 4)>=2
 local Option_DecentralizeWeld:boolean = (_PluginData % 2)>=1
-
---[[
-1 = Motor6D
-2 = WeldConstraint
-3 = Weld
-4 = ManualWeld
-5 = Snap
-6 = Glue
-7 = RotateV
-8 = Rotate
-]]
-
 
 local Toolbar = plugin:CreateToolbar("Bind")
 local Open_UI_Button = Toolbar:CreateButton("Bind_Weld_Plugin_YS","Open Weld UI","rbxassetid://99241917663573","Open UI")
@@ -134,78 +140,7 @@ end
 --[Children] {
 SetProperty(Instance.new("UICorner",Base),"CornerRadius",UDim2_0_5px)
 SetProperty(Instance.new("UIListLayout",Base),"SortOrder",Enum.SortOrder.LayoutOrder)
-local SampleBase = Instance.new("Frame") do
-	SetProperty(SampleBase,"Active",true)
-	SetProperty(SampleBase,"BackgroundColor3",Color3.new(0.294,0.294,0.294))
-	SetProperty(SampleBase,"BorderColor3",Color3.new(0,0,0))
-	SetProperty(SampleBase,"BorderSizePixel",0)
-	SetProperty(SampleBase,"Name","SampleBase")
-	SetProperty(SampleBase,"Size",UDim2_1__u12__0__20)
-	SetProperty(SampleBase,"ZIndex",3)
-	SetProperty(SampleBase,"Parent",Base)
-end
---[Children] {
-local ColorSample = Instance.new("Frame") do
-	SetProperty(ColorSample,"AnchorPoint",Vector2_One_Half)
-	SetProperty(ColorSample,"BackgroundColor3",Color3.new(0.729,0.208,0))
-	SetProperty(ColorSample,"BorderColor3",Color3.new(0,0,0))
-	SetProperty(ColorSample,"BorderSizePixel",0)
-	SetProperty(ColorSample,"Interactable",false)
-	SetProperty(ColorSample,"Name","ColorSample")
-	SetProperty(ColorSample,"Position",UDim2.fromScale(1,0.5))
-	SetProperty(ColorSample,"Size",UDim2.fromOffset(15,15))
-	SetProperty(ColorSample,"ZIndex",4)
-	SetProperty(ColorSample,"Parent",SampleBase)
-end
---[Children] {
-SetProperty(Instance.new("UICorner",ColorSample),"CornerRadius",UDim_1_0)
---}
-local ImageButton = Instance.new("ImageButton") do
-	SetProperty(ImageButton,"Active",false)
-	SetProperty(ImageButton,"BackgroundColor3",Color3.new(1,1,1))
-	SetProperty(ImageButton,"BackgroundTransparency",1)
-	SetProperty(ImageButton,"BorderColor3",Color3.new(0,0,0))
-	SetProperty(ImageButton,"BorderSizePixel",0)
-	SetProperty(ImageButton,"Image","rbxasset://textures/ui/GuiImagePlaceholder.png")
-	SetProperty(ImageButton,"ImageColor3",Color3.new(0,0,0))
-	SetProperty(ImageButton,"Interactable",false)
-	SetProperty(ImageButton,"Selectable",false)
-	SetProperty(ImageButton,"Size",UDim2.fromOffset(20,20))
-	SetProperty(ImageButton,"ZIndex",4)
-	SetProperty(ImageButton,"Parent",SampleBase)
-end
-local TextLabel = Instance.new("TextLabel") do
-	SetProperty(TextLabel,"BackgroundColor3",Color3.new(0.459,0.459,0.459))
-	SetProperty(TextLabel,"BackgroundTransparency",1)
-	SetProperty(TextLabel,"BorderColor3",Color3.new(0,0,0))
-	SetProperty(TextLabel,"BorderSizePixel",0)
-	SetProperty(TextLabel,"FontFace",SourceSansPro)
-	SetProperty(TextLabel,"Interactable",false)
-	SetProperty(TextLabel,"Position",UDim2.fromOffset(25,0))
-	SetProperty(TextLabel,"Size",UDim2_1__u40__1__0)
-	SetProperty(TextLabel,"TextColor3",Color3.new(1,1,1))
-	SetProperty(TextLabel,"TextSize",20)
-	SetProperty(TextLabel,"TextXAlignment",Enum.TextXAlignment.Left)
-	SetProperty(TextLabel,"ZIndex",4)
-	SetProperty(TextLabel,"Parent",SampleBase)
-end
-local ClickBox = Instance.new("TextButton") do
-	SetProperty(ClickBox,"BackgroundColor3",Color3.new(1,1,1))
-	SetProperty(ClickBox,"BackgroundTransparency",1)
-	SetProperty(ClickBox,"BorderColor3",Color3.new(0,0,0))
-	SetProperty(ClickBox,"BorderSizePixel",0)
-	SetProperty(ClickBox,"FontFace",SourceSansPro)
-	SetProperty(ClickBox,"Name","ClickBox")
-	SetProperty(ClickBox,"Size",UDim2_one)
-	SetProperty(ClickBox,"Text","")
-	SetProperty(ClickBox,"TextColor3",Color3.new(0,0,0))
-	SetProperty(ClickBox,"TextSize",14)
-	SetProperty(ClickBox,"TextTransparency",1)
-	SetProperty(ClickBox,"ZIndex",5)
-	SetProperty(ClickBox,"Parent",SampleBase)
-end
---}
---}
+
 local Targets = Instance.new("ScrollingFrame") do
 	SetProperty(Targets,"AnchorPoint",Vector2.xAxis)
 	SetProperty(Targets,"BackgroundColor3",Color3.new(0.451,0.451,0.451))
@@ -221,79 +156,7 @@ end
 --[Children] {
 SetProperty(Instance.new("UICorner",Targets),"CornerRadius",UDim2_0_5px)
 SetProperty(Instance.new("UIListLayout",Targets),"SortOrder",Enum.SortOrder.LayoutOrder)
-local SampleTarget = Instance.new("Frame") do
-	SetProperty(SampleTarget,"Active",true)
-	SetProperty(SampleTarget,"BackgroundColor3",Color3.new(0.294,0.294,0.294))
-	SetProperty(SampleTarget,"BorderColor3",Color3.new(0,0,0))
-	SetProperty(SampleTarget,"BorderSizePixel",0)
-	SetProperty(SampleTarget,"Name","SampleTarget")
-	SetProperty(SampleTarget,"Size",UDim2_1__u12__0__20)
-	SetProperty(SampleTarget,"ZIndex",3)
-	SetProperty(SampleTarget,"Parent",Targets)
-end
---[Children] {
-local ColorSample_1 = Instance.new("Frame") do
-	SetProperty(ColorSample_1,"AnchorPoint",Vector2_Zero_Half)
-	SetProperty(ColorSample_1,"BackgroundColor3",Color3.new(0.729,0.208,0))
-	SetProperty(ColorSample_1,"BorderColor3",Color3.new(0,0,0))
-	SetProperty(ColorSample_1,"BorderSizePixel",0)
-	SetProperty(ColorSample_1,"Interactable",false)
-	SetProperty(ColorSample_1,"Name","ColorSample")
-	SetProperty(ColorSample_1,"Position",UDim2.fromScale(0,0.5))
-	SetProperty(ColorSample_1,"Size",UDim2.fromOffset(15,15))
-	SetProperty(ColorSample_1,"ZIndex",4)
-	SetProperty(ColorSample_1,"Parent",SampleTarget)
-end
---[Children] {
-SetProperty(Instance.new("UICorner",ColorSample_1),"CornerRadius",UDim_1_0)
---}
-local ImageButton_1 = Instance.new("ImageButton") do
-	SetProperty(ImageButton_1,"Active",false)
-	SetProperty(ImageButton_1,"BackgroundColor3",Color3.new(1,1,1))
-	SetProperty(ImageButton_1,"BackgroundTransparency",1)
-	SetProperty(ImageButton_1,"BorderColor3",Color3.new(0,0,0))
-	SetProperty(ImageButton_1,"BorderSizePixel",0)
-	SetProperty(ImageButton_1,"Image","rbxasset://textures/ui/GuiImagePlaceholder.png")
-	SetProperty(ImageButton_1,"ImageColor3",Color3.new(0,0,0))
-	SetProperty(ImageButton_1,"Interactable",false)
-	SetProperty(ImageButton_1,"Position",UDim2.fromOffset(15,0))
-	SetProperty(ImageButton_1,"Selectable",false)
-	SetProperty(ImageButton_1,"Size",UDim20__20__0__20)
-	SetProperty(ImageButton_1,"ZIndex",4)
-	SetProperty(ImageButton_1,"Parent",SampleTarget)
-end
-local TextLabel_1 = Instance.new("TextLabel") do
-	SetProperty(TextLabel_1,"BackgroundColor3",Color3.new(0.459,0.459,0.459))
-	SetProperty(TextLabel_1,"BackgroundTransparency",1)
-	SetProperty(TextLabel_1,"BorderColor3",Color3.new(0,0,0))
-	SetProperty(TextLabel_1,"BorderSizePixel",0)
-	SetProperty(TextLabel_1,"FontFace",SourceSansPro)
-	SetProperty(TextLabel_1,"Interactable",false)
-	SetProperty(TextLabel_1,"Position",UDim2.fromOffset(40,0))
-	SetProperty(TextLabel_1,"Size",UDim2_1__u40__1__0)
-	SetProperty(TextLabel_1,"TextColor3",Color3.new(1,1,1))
-	SetProperty(TextLabel_1,"TextSize",20)
-	SetProperty(TextLabel_1,"TextXAlignment",Enum.TextXAlignment.Left)
-	SetProperty(TextLabel_1,"ZIndex",4)
-	SetProperty(TextLabel_1,"Parent",SampleTarget)
-end
-local ClickBox_1 = Instance.new("TextButton") do
-	SetProperty(ClickBox_1,"BackgroundColor3",Color3.new(1,1,1))
-	SetProperty(ClickBox_1,"BackgroundTransparency",1)
-	SetProperty(ClickBox_1,"BorderColor3",Color3.new(0,0,0))
-	SetProperty(ClickBox_1,"BorderSizePixel",0)
-	SetProperty(ClickBox_1,"FontFace",SourceSansPro)
-	SetProperty(ClickBox_1,"Name","ClickBox")
-	SetProperty(ClickBox_1,"Size",UDim2_one)
-	SetProperty(ClickBox_1,"Text","")
-	SetProperty(ClickBox_1,"TextColor3",Color3.new(0,0,0))
-	SetProperty(ClickBox_1,"TextSize",14)
-	SetProperty(ClickBox_1,"TextTransparency",1)
-	SetProperty(ClickBox_1,"ZIndex",5)
-	SetProperty(ClickBox_1,"Parent",SampleTarget)
-end
---}
---}
+
 local WeldOptionsButton_Frame = Instance.new("Frame") do
 	SetProperty(WeldOptionsButton_Frame,"Active",true)
 	SetProperty(WeldOptionsButton_Frame,"AnchorPoint",Vector2_Half_One)
@@ -328,7 +191,7 @@ local WeldOptionsButton = Instance.new("TextButton") do
 	SetProperty(WeldOptionsButton,"FontFace",SourceSansPro)
 	SetProperty(WeldOptionsButton,"Name","WeldOptionsButton")
 	SetProperty(WeldOptionsButton,"Size",UDim2_one)
-	
+
 	if WeldOption_State==1 then
 		SetProperty(WeldOptionsButton,"Text","Motor6D")
 	elseif WeldOption_State==2 then
@@ -587,7 +450,6 @@ local TextLabel_2 = Instance.new("TextLabel") do
 	SetProperty(TextLabel_2,"BackgroundColor3",Color3.new(1,1,1))
 	SetProperty(TextLabel_2,"BackgroundTransparency",1)
 	SetProperty(TextLabel_2,"BorderColor3",Color3.new(0,0,0))
-	SetProperty(TextLabel_2,"BorderSizePixel",0)
 	SetProperty(TextLabel_2,"FontFace",Font.new("rbxasset://fonts/families/SourceSansPro.json",Enum.FontWeight.Regular,Enum.FontStyle.Normal))
 	SetProperty(TextLabel_2,"LayoutOrder",1)
 	SetProperty(TextLabel_2,"Position",UDim2_5__0)
@@ -606,7 +468,6 @@ local ButtonSplit = Instance.new("Frame") do
 	SetProperty(ButtonSplit,"BackgroundColor3",Color3.new(1,1,1))
 	SetProperty(ButtonSplit,"BackgroundTransparency",1)
 	SetProperty(ButtonSplit,"BorderColor3",Color3.new(0,0,0))
-	SetProperty(ButtonSplit,"BorderSizePixel",0)
 	SetProperty(ButtonSplit,"LayoutOrder",2)
 	SetProperty(ButtonSplit,"Name","ButtonSplit")
 	SetProperty(ButtonSplit,"Position",UDim2_one_zero)
@@ -659,7 +520,6 @@ local ButtonSplit_1 = Instance.new("Frame") do
 	SetProperty(ButtonSplit_1,"BackgroundColor3",Color3.new(1,1,1))
 	SetProperty(ButtonSplit_1,"BackgroundTransparency",1)
 	SetProperty(ButtonSplit_1,"BorderColor3",Color3.new(0,0,0))
-	SetProperty(ButtonSplit_1,"BorderSizePixel",0)
 	SetProperty(ButtonSplit_1,"LayoutOrder",2)
 	SetProperty(ButtonSplit_1,"Name","ButtonSplit")
 	SetProperty(ButtonSplit_1,"Position",UDim2_one_zero)
@@ -694,7 +554,6 @@ local TextLabel_3 = Instance.new("TextLabel") do
 	SetProperty(TextLabel_3,"BackgroundColor3",Color3.new(1,1,1))
 	SetProperty(TextLabel_3,"BackgroundTransparency",1)
 	SetProperty(TextLabel_3,"BorderColor3",Color3.new(0,0,0))
-	SetProperty(TextLabel_3,"BorderSizePixel",0)
 	SetProperty(TextLabel_3,"FontFace",Font.new("rbxasset://fonts/families/SourceSansPro.json",Enum.FontWeight.Regular,Enum.FontStyle.Normal))
 	SetProperty(TextLabel_3,"LayoutOrder",1)
 	SetProperty(TextLabel_3,"Position",UDim2_5__0)
@@ -728,7 +587,6 @@ local ButtonSplit_2 = Instance.new("Frame") do
 	SetProperty(ButtonSplit_2,"BackgroundColor3",Color3.new(1,1,1))
 	SetProperty(ButtonSplit_2,"BackgroundTransparency",1)
 	SetProperty(ButtonSplit_2,"BorderColor3",Color3.new(0,0,0))
-	SetProperty(ButtonSplit_2,"BorderSizePixel",0)
 	SetProperty(ButtonSplit_2,"LayoutOrder",2)
 	SetProperty(ButtonSplit_2,"Name","ButtonSplit")
 	SetProperty(ButtonSplit_2,"Position",UDim2_one_zero)
@@ -763,7 +621,6 @@ local TextLabel_4 = Instance.new("TextLabel") do
 	SetProperty(TextLabel_4,"BackgroundColor3",Color3.new(1,1,1))
 	SetProperty(TextLabel_4,"BackgroundTransparency",1)
 	SetProperty(TextLabel_4,"BorderColor3",Color3.new(0,0,0))
-	SetProperty(TextLabel_4,"BorderSizePixel",0)
 	SetProperty(TextLabel_4,"FontFace",Font.new("rbxasset://fonts/families/SourceSansPro.json",Enum.FontWeight.Regular,Enum.FontStyle.Normal))
 	SetProperty(TextLabel_4,"LayoutOrder",1)
 	SetProperty(TextLabel_4,"Position",UDim2_5__0)
@@ -798,7 +655,6 @@ local ButtonSplit_3 = Instance.new("Frame") do
 	SetProperty(ButtonSplit_3,"BackgroundColor3",Color3.new(1,1,1))
 	SetProperty(ButtonSplit_3,"BackgroundTransparency",1)
 	SetProperty(ButtonSplit_3,"BorderColor3",Color3.new(0,0,0))
-	SetProperty(ButtonSplit_3,"BorderSizePixel",0)
 	SetProperty(ButtonSplit_3,"LayoutOrder",2)
 	SetProperty(ButtonSplit_3,"Name","ButtonSplit")
 	SetProperty(ButtonSplit_3,"Position",UDim2_one_zero)
@@ -819,10 +675,6 @@ local ImageButton_5 = Instance.new("ImageButton") do
 	SetProperty(ImageButton_5,"Position",UDim2_half)
 	SetProperty(ImageButton_5,"Size",UDim2_0_9)
 	SetProperty(ImageButton_5,"ZIndex",4)
-	Connect(GetProperty(ImageButton_5,"MouseButton1Click")::RBXScriptSignal,function():()
-		Option_DecentralizeWeld = not Option_DecentralizeWeld
-		SetProperty(ImageButton_5,"Image",Option_DecentralizeWeld==true and "rbxassetid://131950065573162" or "rbxassetid://78966475852487")
-	end)
 	SetProperty(ImageButton_5,"Parent",ButtonSplit_3)
 end
 --[Children] {
@@ -833,7 +685,6 @@ local TextLabel_5 = Instance.new("TextLabel") do
 	SetProperty(TextLabel_5,"BackgroundColor3",Color3.new(1,1,1))
 	SetProperty(TextLabel_5,"BackgroundTransparency",1)
 	SetProperty(TextLabel_5,"BorderColor3",Color3.new(0,0,0))
-	SetProperty(TextLabel_5,"BorderSizePixel",0)
 	SetProperty(TextLabel_5,"FontFace",Font.new("rbxasset://fonts/families/SourceSansPro.json",Enum.FontWeight.Regular,Enum.FontStyle.Normal))
 	SetProperty(TextLabel_5,"LayoutOrder",1)
 	SetProperty(TextLabel_5,"Position",UDim2_5__0)
@@ -853,7 +704,6 @@ local TextLabel_Base = Instance.new("TextLabel") do
 	SetProperty(TextLabel_Base,"BackgroundColor3",Color3.new(1,1,1))
 	SetProperty(TextLabel_Base,"BackgroundTransparency",1)
 	SetProperty(TextLabel_Base,"BorderColor3",Color3.new(0,0,0))
-	SetProperty(TextLabel_Base,"BorderSizePixel",0)
 	SetProperty(TextLabel_Base,"FontFace",SourceSansPro)
 	SetProperty(TextLabel_Base,"Name","TextLabel_Base")
 	SetProperty(TextLabel_Base,"Position",UDim2.new(0.25,0,0.017,0))
@@ -870,7 +720,6 @@ local TextLabel_Target = Instance.new("TextLabel") do
 	SetProperty(TextLabel_Target,"BackgroundColor3",Color3.new(1,1,1))
 	SetProperty(TextLabel_Target,"BackgroundTransparency",1)
 	SetProperty(TextLabel_Target,"BorderColor3",Color3.new(0,0,0))
-	SetProperty(TextLabel_Target,"BorderSizePixel",0)
 	SetProperty(TextLabel_Target,"FontFace",SourceSansPro)
 	SetProperty(TextLabel_Target,"Name","TextLabel_Target")
 	SetProperty(TextLabel_Target,"Position",UDim2.new(0.75,0,0.017,0))
@@ -903,7 +752,6 @@ local SelectWelds = Instance.new("TextLabel") do
 	SetProperty(SelectWelds,"BackgroundColor3",Color3.new(0.369,0.369,0.369))
 	SetProperty(SelectWelds,"BackgroundTransparency",1)
 	SetProperty(SelectWelds,"BorderColor3",Color3.new(0,0,0))
-	SetProperty(SelectWelds,"BorderSizePixel",0)
 	SetProperty(SelectWelds,"Interactable",false)
 	SetProperty(SelectWelds,"Name","SelectWelds")
 	SetProperty(SelectWelds,"Position",UDim2.new(0.6,-5,0.905,0))
@@ -941,6 +789,7 @@ local function UpdateWeldOptions_List():()
 	SetProperty(WO_Rotate,"Size",wo_sz_cache_free)
 	SetProperty(WeldOptions,"CanvasSize",UDim2_zero)
 end
+
 WeldOptions:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateWeldOptions_List)
 UpdateWeldOptions_List()
 
@@ -1015,12 +864,375 @@ SetProperty(WO_RotateV,"BackgroundColor3",Dark)
 SetProperty(WO_RotateV,"TextColor3",BrightText)
 SetProperty(WO_Rotate,"BackgroundColor3",Dark)
 SetProperty(WO_Rotate,"TextColor3",BrightText)
+
+local StudioThemeType = Theme.Name
 local gc = Connect(GetProperty(Studio,"ThemeChanged")::RBXScriptSignal,function():()
 	Theme = GetProperty(Studio,"Theme")::StudioTheme
+	StudioThemeType = Theme.Name
 end)
 
+local function nextColor(iteration:number):Color3
+	local hue = (0.34567 + iteration * 0.6180339887) % 1
+	local sat = 0.7 + ((iteration * 0.05) % 0.2) --[[0.7–0.9]]
+	local val = 0.8 - ((iteration * 0.03) % 0.2) --[[0.6–0.8]]
+	return Color3.fromHSV(hue, sat, val)
+end
+
+--also scales base btw
+local function Scale_Decentralized_Target():()
+
+end
+local function Scale_Target():()
+	local y:number = (#Instances_temp-1)*20
+	local frame_y = GetVector2(GetProperty(Targets,"AbsoluteSize")::Vector2,"Y")
+	if frame_y<y then
+		for i,v in Instances_temp do
+			if i==1 then continue end
+			SetProperty(v,"Size",UDim2_1__u12__0__20)--UDim2_1__u12__0__20
+		end
+	else
+		for i,v in Instances_temp do
+			if i==1 then continue end
+			SetProperty(v,"Size",UDim2_1__u12__0__20_NoScrollBar)--UDim2_1__u12__0__20
+		end
+	end
+	SetProperty(Targets,"CanvasSize",UDim2.fromOffset(0,y))
+end
+
+
+local function SelectionChangedFunc():()
+	for i,v in Instances_temp do
+		BrightText_Stack[Connection_Trace[v::Frame]]=nil
+		Destroy(v)
+	end
+	local get = Selection_Get(Selection)
+	local get_valid = table.create(#get)::{BasePart}
+	for i,v in get do
+		if not IsA(v,"BasePart") then continue end
+		table.insert(get_valid,v::BasePart)
+	end
+	Selection_Ins = get_valid
+	local new_table = table.create(#get_valid)
+	
+		
+	Instances_temp=new_table
+	local get_valid_len = #get_valid
+	if #get<1 or get_valid_len<1 then return end
+	if Option_DecentralizeWeld then
+		local iter_color:number = 1
+		local target_count:number = get_valid_len//2
+		local y = target_count*20
+		local frame_y = GetVector2(GetProperty(Targets,"AbsoluteSize")::Vector2,"Y")
+		local frame_size = if frame_y<y then UDim2_1__u12__0__20 else UDim2_1__u12__0__20_NoScrollBar
+
+		SetProperty(Targets,"CanvasSize",UDim2.fromOffset(0,y))
+		SetProperty(Base,"CanvasSize",UDim2.fromOffset(0,y))
+
+
+		for i=2,get_valid_len,2 do
+			local _i = i-1
+			local base,target = get_valid[_i],get_valid[i]
+			local color = nextColor(iter_color)
+			iter_color+=1
+			local base_name = GetProperty(base,"Name")
+			local base_Icon = "rbxasset://studio_svg_textures/Shared/InsertableObjects/"..StudioThemeType.."/Standard/"..GetProperty(base,"ClassName")::string..".png"
+			local SampleBase = Instance.new("Frame") do
+				SetProperty(SampleBase,"BackgroundColor3",Color3.new(0.294,0.294,0.294))
+				SetProperty(SampleBase,"BorderSizePixel",0)
+				SetProperty(SampleBase,"Size",frame_size)
+				SetProperty(SampleBase,"ZIndex",3)
+				SetProperty(SampleBase,"Parent",Base)
+			end
+			--[Children] {
+			local ColorSample = Instance.new("Frame") do
+				SetProperty(ColorSample,"AnchorPoint",Vector2_One_Half)
+				SetProperty(ColorSample,"BackgroundColor3",color)
+				SetProperty(ColorSample,"BorderSizePixel",0)
+				SetProperty(ColorSample,"Position",UDim2_One_Half)
+				SetProperty(ColorSample,"Size",UDim2_15__15)
+				SetProperty(ColorSample,"ZIndex",5)
+				SetProperty(ColorSample,"Parent",SampleBase)
+			end
+			--[Children] {
+			SetProperty(Instance.new("UICorner",ColorSample),"CornerRadius",UDim_1_0)
+			--}
+			local ImageButton = Instance.new("ImageButton") do
+				SetProperty(ImageButton,"BackgroundTransparency",1)
+				SetProperty(ImageButton,"Image",base_Icon)
+				SetProperty(ImageButton,"Size",UDim20__20__0__20)
+				SetProperty(ImageButton,"ZIndex",4)
+				SetProperty(ImageButton,"Parent",SampleBase)
+			end
+			local TextLabel = Instance.new("TextLabel") do
+				SetProperty(TextLabel,"BackgroundTransparency",1)
+				SetProperty(TextLabel,"FontFace",SourceSansPro)
+				SetProperty(TextLabel,"Position",UDim2_25__0)
+				SetProperty(TextLabel,"Size",UDim2_1__u40__1__0)
+				SetProperty(TextLabel,"Text",base_name)
+				SetProperty(TextLabel,"TextSize",20)
+				SetProperty(TextLabel,"TextColor3",BrightText)
+				SetProperty(TextLabel,"TextXAlignment",Enum.TextXAlignment.Left)
+				SetProperty(TextLabel,"ZIndex",4)
+				SetProperty(TextLabel,"Parent",SampleBase)
+				BrightText_Stack[TextLabel]=true
+				Connection_Trace[SampleBase]=TextLabel
+			end
+			local ClickBox = Instance.new("TextButton") do
+				SetProperty(ClickBox,"BackgroundTransparency",1)
+				SetProperty(ClickBox,"FontFace",SourceSansPro)
+				SetProperty(ClickBox,"Size",UDim2_one)
+				SetProperty(ClickBox,"TextTransparency",1)
+				SetProperty(ClickBox,"ZIndex",6)
+				SetProperty(ClickBox,"Parent",SampleBase)
+			end
+			--}
+			--}
+			new_table[_i]=SampleBase
+			local target_name = GetProperty(target,"Name")
+			local target_Icon = "rbxasset://studio_svg_textures/Shared/InsertableObjects/"..StudioThemeType.."/Standard/"..GetProperty(target,"ClassName")::string..".png"
+			local SampleTarget = Instance.new("Frame") do
+				SetProperty(SampleTarget,"BackgroundColor3",Color3.new(0.294,0.294,0.294))
+				SetProperty(SampleTarget,"BorderSizePixel",0)
+				SetProperty(SampleTarget,"Size",frame_size)
+				SetProperty(SampleTarget,"ZIndex",3)
+				SetProperty(SampleTarget,"Parent",Targets)
+			end
+			--[Children] {
+			local ColorSample_1 = Instance.new("Frame") do
+				SetProperty(ColorSample_1,"AnchorPoint",Vector2_Zero_Half)
+				SetProperty(ColorSample_1,"BackgroundColor3",color)
+				SetProperty(ColorSample_1,"BorderSizePixel",0)
+				SetProperty(ColorSample_1,"Position",UDim2.fromScale(0,0.5))
+				SetProperty(ColorSample_1,"Size",UDim2_15__15)
+				SetProperty(ColorSample_1,"ZIndex",5)
+				SetProperty(ColorSample_1,"Parent",SampleTarget)
+			end
+			--[Children] {
+			SetProperty(Instance.new("UICorner",ColorSample_1),"CornerRadius",UDim_1_0)
+			--}
+			local ImageButton_1 = Instance.new("ImageButton") do
+				SetProperty(ImageButton_1,"BackgroundTransparency",1)
+				SetProperty(ImageButton_1,"Image",target_Icon)
+				SetProperty(ImageButton_1,"Position",UDim2.fromOffset(15,0))
+				SetProperty(ImageButton_1,"Size",UDim20__20__0__20)
+				SetProperty(ImageButton_1,"ZIndex",4)
+				SetProperty(ImageButton_1,"Parent",SampleTarget)
+			end
+			local TextLabel_1 = Instance.new("TextLabel") do
+				SetProperty(TextLabel_1,"BackgroundTransparency",1)
+				SetProperty(TextLabel_1,"FontFace",SourceSansPro)
+				SetProperty(TextLabel_1,"Position",UDim2.fromOffset(40,0))
+				SetProperty(TextLabel_1,"Size",UDim2_1__u40__1__0)
+				SetProperty(TextLabel_1,"TextSize",20)
+				SetProperty(TextLabel_1,"Text",target_name)
+				SetProperty(TextLabel_1,"TextColor3",BrightText)
+				SetProperty(TextLabel_1,"TextXAlignment",Enum.TextXAlignment.Left)
+				SetProperty(TextLabel_1,"ZIndex",4)
+				SetProperty(TextLabel_1,"Parent",SampleTarget)
+				BrightText_Stack[TextLabel_1]=true
+				Connection_Trace[SampleTarget]=TextLabel_1
+			end
+			local ClickBox_1 = Instance.new("TextButton") do
+				SetProperty(ClickBox_1,"BackgroundColor3",Color3.new(1,1,1))
+				SetProperty(ClickBox_1,"BackgroundTransparency",1)
+				SetProperty(ClickBox_1,"BorderColor3",Color3.new(0,0,0))
+				SetProperty(ClickBox_1,"FontFace",SourceSansPro)
+				SetProperty(ClickBox_1,"Name","ClickBox")
+				SetProperty(ClickBox_1,"Size",UDim2_one)
+				SetProperty(ClickBox_1,"Text","")
+				SetProperty(ClickBox_1,"TextColor3",Color3.new(0,0,0))
+				SetProperty(ClickBox_1,"TextSize",14)
+				SetProperty(ClickBox_1,"TextTransparency",1)
+				SetProperty(ClickBox_1,"ZIndex",6)
+				SetProperty(ClickBox_1,"Parent",SampleTarget)
+			end
+			--}
+			--}
+
+			new_table[i]=SampleTarget
+		end
+		Scale_Decentralized_Target()
+		return
+	end
+	SetProperty(Base,"CanvasSize",UDim2_zero)
+	local base = get_valid[1]::BasePart
+	local base_name = GetProperty(base,"Name")
+	local base_Icon = "rbxasset://studio_svg_textures/Shared/InsertableObjects/"..StudioThemeType.."/Standard/"..GetProperty(base,"ClassName")::string..".png"
+	local SampleBase = Instance.new("Frame") do
+		SetProperty(SampleBase,"BackgroundColor3",Color3.new(0.294,0.294,0.294))
+		SetProperty(SampleBase,"BorderSizePixel",0)
+		SetProperty(SampleBase,"Size",UDim2_1__u12__0__20_NoScrollBar)--UDim2_1__u12__0__20
+		SetProperty(SampleBase,"ZIndex",3)
+		SetProperty(SampleBase,"Parent",Base)
+	end
+	--[Children] {
+	local ColorSample = Instance.new("Frame") do
+		SetProperty(ColorSample,"AnchorPoint",Vector2_One_Half)
+		SetProperty(ColorSample,"BackgroundColor3",Red_Default_Color)
+		SetProperty(ColorSample,"BorderSizePixel",0)
+		SetProperty(ColorSample,"Position",UDim2_One_Half)
+		SetProperty(ColorSample,"Size",UDim2_15__15)
+		SetProperty(ColorSample,"ZIndex",5)
+		SetProperty(ColorSample,"Parent",SampleBase)
+	end
+	--[Children] {
+	SetProperty(Instance.new("UICorner",ColorSample),"CornerRadius",UDim_1_0)
+	--}
+	local ImageButton = Instance.new("ImageButton") do
+		SetProperty(ImageButton,"BackgroundTransparency",1)
+		SetProperty(ImageButton,"Image",base_Icon)
+		SetProperty(ImageButton,"Size",UDim20__20__0__20)
+		SetProperty(ImageButton,"ZIndex",4)
+		SetProperty(ImageButton,"Parent",SampleBase)
+	end
+	local TextLabel = Instance.new("TextLabel") do
+		SetProperty(TextLabel,"BackgroundTransparency",1)
+		SetProperty(TextLabel,"FontFace",SourceSansPro)
+		SetProperty(TextLabel,"Position",UDim2_25__0)
+		SetProperty(TextLabel,"Size",UDim2_1__u40__1__0)
+		SetProperty(TextLabel,"Text",base_name)
+		SetProperty(TextLabel,"TextSize",20)
+		SetProperty(TextLabel,"TextColor3",BrightText)
+		SetProperty(TextLabel,"TextXAlignment",Enum.TextXAlignment.Left)
+		SetProperty(TextLabel,"ZIndex",4)
+		SetProperty(TextLabel,"Parent",SampleBase)
+		BrightText_Stack[TextLabel]=true
+		Connection_Trace[SampleBase]=TextLabel
+	end
+	local ClickBox = Instance.new("TextButton") do
+		SetProperty(ClickBox,"BackgroundTransparency",1)
+		SetProperty(ClickBox,"FontFace",SourceSansPro)
+		SetProperty(ClickBox,"Size",UDim2_one)
+		SetProperty(ClickBox,"TextTransparency",1)
+		SetProperty(ClickBox,"ZIndex",6)
+		SetProperty(ClickBox,"Parent",SampleBase)
+	end
+	--}
+	--}
+	new_table[1]=SampleBase
+	
+	
+	
+	local y:number = (#get_valid-1)*20
+	local frame_y = GetVector2(GetProperty(Targets,"AbsoluteSize")::Vector2,"Y")
+	local frame_size = if frame_y<y then UDim2_1__u12__0__20 else UDim2_1__u12__0__20_NoScrollBar
+	SetProperty(Targets,"CanvasSize",UDim2.fromOffset(0,y))
+	
+	for i,v in get_valid do
+		if i==1 then continue end
+		
+		local target_name = GetProperty(v,"Name")
+		local target_Icon = "rbxasset://studio_svg_textures/Shared/InsertableObjects/"..StudioThemeType.."/Standard/"..GetProperty(v,"ClassName")::string..".png"
+		local SampleTarget = Instance.new("Frame") do
+			SetProperty(SampleTarget,"BackgroundColor3",Color3.new(0.294,0.294,0.294))
+			SetProperty(SampleTarget,"BorderSizePixel",0)
+			SetProperty(SampleTarget,"Size",frame_size)
+			SetProperty(SampleTarget,"ZIndex",3)
+			SetProperty(SampleTarget,"Parent",Targets)
+		end
+		--[Children] {
+		local ColorSample_1 = Instance.new("Frame") do
+			SetProperty(ColorSample_1,"AnchorPoint",Vector2_Zero_Half)
+			SetProperty(ColorSample_1,"BackgroundColor3",Red_Default_Color)
+			SetProperty(ColorSample_1,"BorderSizePixel",0)
+			SetProperty(ColorSample_1,"Position",UDim2.fromScale(0,0.5))
+			SetProperty(ColorSample_1,"Size",UDim2_15__15)
+			SetProperty(ColorSample_1,"ZIndex",5)
+			SetProperty(ColorSample_1,"Parent",SampleTarget)
+		end
+		--[Children] {
+		SetProperty(Instance.new("UICorner",ColorSample_1),"CornerRadius",UDim_1_0)
+		--}
+		local ImageButton_1 = Instance.new("ImageButton") do
+			SetProperty(ImageButton_1,"BackgroundTransparency",1)
+			SetProperty(ImageButton_1,"Image",target_Icon)
+			SetProperty(ImageButton_1,"Position",UDim2.fromOffset(15,0))
+			SetProperty(ImageButton_1,"Size",UDim20__20__0__20)
+			SetProperty(ImageButton_1,"ZIndex",4)
+			SetProperty(ImageButton_1,"Parent",SampleTarget)
+		end
+		local TextLabel_1 = Instance.new("TextLabel") do
+			SetProperty(TextLabel_1,"BackgroundTransparency",1)
+			SetProperty(TextLabel_1,"FontFace",SourceSansPro)
+			SetProperty(TextLabel_1,"Position",UDim2.fromOffset(40,0))
+			SetProperty(TextLabel_1,"Size",UDim2_1__u40__1__0)
+			SetProperty(TextLabel_1,"TextSize",20)
+			SetProperty(TextLabel_1,"Text",target_name)
+			SetProperty(TextLabel_1,"TextColor3",BrightText)
+			SetProperty(TextLabel_1,"TextXAlignment",Enum.TextXAlignment.Left)
+			SetProperty(TextLabel_1,"ZIndex",4)
+			SetProperty(TextLabel_1,"Parent",SampleTarget)
+			BrightText_Stack[TextLabel_1]=true
+			Connection_Trace[SampleTarget]=TextLabel_1
+		end
+		local ClickBox_1 = Instance.new("TextButton") do
+			SetProperty(ClickBox_1,"BackgroundColor3",Color3.new(1,1,1))
+			SetProperty(ClickBox_1,"BackgroundTransparency",1)
+			SetProperty(ClickBox_1,"BorderColor3",Color3.new(0,0,0))
+			SetProperty(ClickBox_1,"FontFace",SourceSansPro)
+			SetProperty(ClickBox_1,"Name","ClickBox")
+			SetProperty(ClickBox_1,"Size",UDim2_one)
+			SetProperty(ClickBox_1,"Text","")
+			SetProperty(ClickBox_1,"TextColor3",Color3.new(0,0,0))
+			SetProperty(ClickBox_1,"TextSize",14)
+			SetProperty(ClickBox_1,"TextTransparency",1)
+			SetProperty(ClickBox_1,"ZIndex",6)
+			SetProperty(ClickBox_1,"Parent",SampleTarget)
+		end
+		--}
+		--}
+		
+		new_table[i]=SampleTarget
+	end
+end
+
+local Targets_AbsoluteSize_Signal = GetPropertyChangedSignal(Targets,"AbsoluteSize")::RBXScriptSignal
+local Base_AbsoluteSize_Signal = GetPropertyChangedSignal(Base,"AbsoluteSize")::RBXScriptSignal
+
+local Target_gc:RBXScriptConnection
+local Base_gc:RBXScriptConnection?=nil
+if Option_DecentralizeWeld then
+	Target_gc = Connect(Targets_AbsoluteSize_Signal,Scale_Decentralized_Target)
+else
+	Target_gc = Connect(Targets_AbsoluteSize_Signal,Scale_Target)
+end
+Disconnect = Target_gc.Disconnect
+Connect(GetProperty(ImageButton_5,"MouseButton1Click")::RBXScriptSignal,function():()
+	Option_DecentralizeWeld = not Option_DecentralizeWeld
+	Disconnect(Target_gc)
+	if Option_DecentralizeWeld then
+		Target_gc = Connect(Targets_AbsoluteSize_Signal,Scale_Decentralized_Target)
+	else
+		Target_gc = Connect(Targets_AbsoluteSize_Signal,Scale_Target)
+	end
+	SetProperty(ImageButton_5,"Image",Option_DecentralizeWeld==true and "rbxassetid://131950065573162" or "rbxassetid://78966475852487")
+	SelectionChangedFunc()
+end)
+
+
+local SelectionChanged = GetProperty(Selection,"SelectionChanged")::RBXScriptSignal
+local selection_connection:RBXScriptConnection?=nil
+local function ConnectWhenWidgetEnabled():()
+	if GetProperty(Widget,"Enabled")::boolean then
+		selection_connection = Connect(SelectionChanged,SelectionChangedFunc)
+		return	
+	end
+	if selection_connection then
+		Disconnect(selection_connection)
+	end
+end
+Connect(GetPropertyChangedSignal(Widget,"Enabled"),ConnectWhenWidgetEnabled)
+ConnectWhenWidgetEnabled()
+
+for i in BrightText_Stack do
+	SetProperty(i,"TextColor3",BrightText)
+end
+
 ;(GetProperty(plugin,"Unloading")::RBXScriptSignal):Once(function():()
-	gc:Disconnect()
+	if selection_connection then
+		Disconnect(selection_connection)
+	end
+	Disconnect(gc)
 	local pack = (WeldOption_State * 32)
 		+ (Option_SelectWelds and 16 or 0)
 		+ (Option_PivotToOffset and 8 or 0)

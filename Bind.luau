@@ -134,6 +134,7 @@ local Base = Instance.new("ScrollingFrame") do
 	SetProperty(Base,"Position",UDim2_point_one)
 	SetProperty(Base,"Selectable",false)
 	SetProperty(Base,"Size",UDim2_0_3__0_5)
+	SetProperty(Base,"CanvasSize",UDim2_zero)
 	SetProperty(Base,"ZIndex",2)
 	SetProperty(Base,"Parent",Main)
 end
@@ -150,6 +151,7 @@ local Targets = Instance.new("ScrollingFrame") do
 	SetProperty(Targets,"Position",UDim2.fromScale(0.9,0.1))
 	SetProperty(Targets,"Selectable",false)
 	SetProperty(Targets,"Size",UDim2_0_3__0_5)
+	SetProperty(Targets,"CanvasSize",UDim2_zero)
 	SetProperty(Targets,"ZIndex",2)
 	SetProperty(Targets,"Parent",Main)
 end
@@ -817,6 +819,12 @@ local ScrollBar_Color_BACKGROUND = GetColor(Theme,Enum.StudioStyleGuideColor.Scr
 local Border_Color = GetColor(Theme,Enum.StudioStyleGuideColor.Mid)
 local Tab_Color = GetColor(Theme,Enum.StudioStyleGuideColor.Tab)
 local MainBackground = GetColor(Theme,Enum.StudioStyleGuideColor.MainBackground)
+local Light_Color = GetColor(Theme,Enum.StudioStyleGuideColor.Light)
+
+
+SetProperty(WeldOptionsButton,"BackgroundColor3",Light_Color)
+SetProperty(TextLabel_Base,"TextColor3",BrightText)
+SetProperty(TextLabel_Target,"TextColor3",BrightText)
 SetProperty(Main,"BackgroundColor3",MainBackground)
 
 SetProperty(L_PivotToOffset,"BackgroundColor3",Tab_Color)
@@ -880,21 +888,28 @@ end
 
 --also scales base btw
 local function Scale_Decentralized_Target():()
+	local Instances_temp_len = #Instances_temp
+	local target_count:number = Instances_temp_len//2
+	local y = target_count*20
+	local frame_y = GetVector2(GetProperty(Targets,"AbsoluteSize")::Vector2,"Y")
+	local frame_size = if frame_y<y then UDim2_1__u12__0__20 else UDim2_1__u12__0__20_NoScrollBar
+	local sz_temp = UDim2.fromOffset(0,y)
+	SetProperty(Targets,"CanvasSize",sz_temp)
+	SetProperty(Base,"CanvasSize",sz_temp)
 
+	for i,v in Instances_temp do
+		SetProperty(v,"Size",frame_size)
+	end
+	SetProperty(Targets,"CanvasSize",UDim2.fromOffset(0,y))
 end
 local function Scale_Target():()
 	local y:number = (#Instances_temp-1)*20
 	local frame_y = GetVector2(GetProperty(Targets,"AbsoluteSize")::Vector2,"Y")
-	if frame_y<y then
-		for i,v in Instances_temp do
-			if i==1 then continue end
-			SetProperty(v,"Size",UDim2_1__u12__0__20)--UDim2_1__u12__0__20
-		end
-	else
-		for i,v in Instances_temp do
-			if i==1 then continue end
-			SetProperty(v,"Size",UDim2_1__u12__0__20_NoScrollBar)--UDim2_1__u12__0__20
-		end
+	local frame_size = if frame_y<y then UDim2_1__u12__0__20 else UDim2_1__u12__0__20_NoScrollBar
+
+	for i,v in Instances_temp do
+		if i==1 then continue end
+		SetProperty(v,"Size",frame_size)
 	end
 	SetProperty(Targets,"CanvasSize",UDim2.fromOffset(0,y))
 end
@@ -913,11 +928,15 @@ local function SelectionChangedFunc():()
 	end
 	Selection_Ins = get_valid
 	local new_table = table.create(#get_valid)
-	
-		
+
+
 	Instances_temp=new_table
 	local get_valid_len = #get_valid
-	if #get<1 or get_valid_len<1 then return end
+	if #get<1 or get_valid_len<1 then
+		SetProperty(Targets,"CanvasSize",UDim2_zero)
+		SetProperty(Base,"CanvasSize",UDim2_zero)
+		return
+	end
 	if Option_DecentralizeWeld then
 		local iter_color:number = 1
 		local target_count:number = get_valid_len//2
@@ -925,8 +944,9 @@ local function SelectionChangedFunc():()
 		local frame_y = GetVector2(GetProperty(Targets,"AbsoluteSize")::Vector2,"Y")
 		local frame_size = if frame_y<y then UDim2_1__u12__0__20 else UDim2_1__u12__0__20_NoScrollBar
 
-		SetProperty(Targets,"CanvasSize",UDim2.fromOffset(0,y))
-		SetProperty(Base,"CanvasSize",UDim2.fromOffset(0,y))
+		local sz_temp = UDim2.fromOffset(0,y)
+		SetProperty(Targets,"CanvasSize",sz_temp)
+		SetProperty(Base,"CanvasSize",sz_temp)
 
 
 		for i=2,get_valid_len,2 do
@@ -937,7 +957,7 @@ local function SelectionChangedFunc():()
 			local base_name = GetProperty(base,"Name")
 			local base_Icon = "rbxasset://studio_svg_textures/Shared/InsertableObjects/"..StudioThemeType.."/Standard/"..GetProperty(base,"ClassName")::string..".png"
 			local SampleBase = Instance.new("Frame") do
-				SetProperty(SampleBase,"BackgroundColor3",Color3.new(0.294,0.294,0.294))
+				SetProperty(SampleBase,"BackgroundColor3",Light_Color)
 				SetProperty(SampleBase,"BorderSizePixel",0)
 				SetProperty(SampleBase,"Size",frame_size)
 				SetProperty(SampleBase,"ZIndex",3)
@@ -969,7 +989,7 @@ local function SelectionChangedFunc():()
 				SetProperty(TextLabel,"Position",UDim2_25__0)
 				SetProperty(TextLabel,"Size",UDim2_1__u40__1__0)
 				SetProperty(TextLabel,"Text",base_name)
-				SetProperty(TextLabel,"TextSize",20)
+				SetProperty(TextLabel,"TextScaled",true)
 				SetProperty(TextLabel,"TextColor3",BrightText)
 				SetProperty(TextLabel,"TextXAlignment",Enum.TextXAlignment.Left)
 				SetProperty(TextLabel,"ZIndex",4)
@@ -977,21 +997,13 @@ local function SelectionChangedFunc():()
 				BrightText_Stack[TextLabel]=true
 				Connection_Trace[SampleBase]=TextLabel
 			end
-			local ClickBox = Instance.new("TextButton") do
-				SetProperty(ClickBox,"BackgroundTransparency",1)
-				SetProperty(ClickBox,"FontFace",SourceSansPro)
-				SetProperty(ClickBox,"Size",UDim2_one)
-				SetProperty(ClickBox,"TextTransparency",1)
-				SetProperty(ClickBox,"ZIndex",6)
-				SetProperty(ClickBox,"Parent",SampleBase)
-			end
 			--}
 			--}
 			new_table[_i]=SampleBase
 			local target_name = GetProperty(target,"Name")
 			local target_Icon = "rbxasset://studio_svg_textures/Shared/InsertableObjects/"..StudioThemeType.."/Standard/"..GetProperty(target,"ClassName")::string..".png"
 			local SampleTarget = Instance.new("Frame") do
-				SetProperty(SampleTarget,"BackgroundColor3",Color3.new(0.294,0.294,0.294))
+				SetProperty(SampleTarget,"BackgroundColor3",Light_Color)
 				SetProperty(SampleTarget,"BorderSizePixel",0)
 				SetProperty(SampleTarget,"Size",frame_size)
 				SetProperty(SampleTarget,"ZIndex",3)
@@ -1023,7 +1035,7 @@ local function SelectionChangedFunc():()
 				SetProperty(TextLabel_1,"FontFace",SourceSansPro)
 				SetProperty(TextLabel_1,"Position",UDim2.fromOffset(40,0))
 				SetProperty(TextLabel_1,"Size",UDim2_1__u40__1__0)
-				SetProperty(TextLabel_1,"TextSize",20)
+				SetProperty(TextLabel_1,"TextScaled",true)
 				SetProperty(TextLabel_1,"Text",target_name)
 				SetProperty(TextLabel_1,"TextColor3",BrightText)
 				SetProperty(TextLabel_1,"TextXAlignment",Enum.TextXAlignment.Left)
@@ -1031,20 +1043,6 @@ local function SelectionChangedFunc():()
 				SetProperty(TextLabel_1,"Parent",SampleTarget)
 				BrightText_Stack[TextLabel_1]=true
 				Connection_Trace[SampleTarget]=TextLabel_1
-			end
-			local ClickBox_1 = Instance.new("TextButton") do
-				SetProperty(ClickBox_1,"BackgroundColor3",Color3.new(1,1,1))
-				SetProperty(ClickBox_1,"BackgroundTransparency",1)
-				SetProperty(ClickBox_1,"BorderColor3",Color3.new(0,0,0))
-				SetProperty(ClickBox_1,"FontFace",SourceSansPro)
-				SetProperty(ClickBox_1,"Name","ClickBox")
-				SetProperty(ClickBox_1,"Size",UDim2_one)
-				SetProperty(ClickBox_1,"Text","")
-				SetProperty(ClickBox_1,"TextColor3",Color3.new(0,0,0))
-				SetProperty(ClickBox_1,"TextSize",14)
-				SetProperty(ClickBox_1,"TextTransparency",1)
-				SetProperty(ClickBox_1,"ZIndex",6)
-				SetProperty(ClickBox_1,"Parent",SampleTarget)
 			end
 			--}
 			--}
@@ -1059,7 +1057,7 @@ local function SelectionChangedFunc():()
 	local base_name = GetProperty(base,"Name")
 	local base_Icon = "rbxasset://studio_svg_textures/Shared/InsertableObjects/"..StudioThemeType.."/Standard/"..GetProperty(base,"ClassName")::string..".png"
 	local SampleBase = Instance.new("Frame") do
-		SetProperty(SampleBase,"BackgroundColor3",Color3.new(0.294,0.294,0.294))
+		SetProperty(SampleBase,"BackgroundColor3",Light_Color)
 		SetProperty(SampleBase,"BorderSizePixel",0)
 		SetProperty(SampleBase,"Size",UDim2_1__u12__0__20_NoScrollBar)--UDim2_1__u12__0__20
 		SetProperty(SampleBase,"ZIndex",3)
@@ -1091,7 +1089,7 @@ local function SelectionChangedFunc():()
 		SetProperty(TextLabel,"Position",UDim2_25__0)
 		SetProperty(TextLabel,"Size",UDim2_1__u40__1__0)
 		SetProperty(TextLabel,"Text",base_name)
-		SetProperty(TextLabel,"TextSize",20)
+		SetProperty(TextLabel,"TextScaled",true)
 		SetProperty(TextLabel,"TextColor3",BrightText)
 		SetProperty(TextLabel,"TextXAlignment",Enum.TextXAlignment.Left)
 		SetProperty(TextLabel,"ZIndex",4)
@@ -1099,32 +1097,24 @@ local function SelectionChangedFunc():()
 		BrightText_Stack[TextLabel]=true
 		Connection_Trace[SampleBase]=TextLabel
 	end
-	local ClickBox = Instance.new("TextButton") do
-		SetProperty(ClickBox,"BackgroundTransparency",1)
-		SetProperty(ClickBox,"FontFace",SourceSansPro)
-		SetProperty(ClickBox,"Size",UDim2_one)
-		SetProperty(ClickBox,"TextTransparency",1)
-		SetProperty(ClickBox,"ZIndex",6)
-		SetProperty(ClickBox,"Parent",SampleBase)
-	end
 	--}
 	--}
 	new_table[1]=SampleBase
-	
-	
-	
+
+
+
 	local y:number = (#get_valid-1)*20
 	local frame_y = GetVector2(GetProperty(Targets,"AbsoluteSize")::Vector2,"Y")
 	local frame_size = if frame_y<y then UDim2_1__u12__0__20 else UDim2_1__u12__0__20_NoScrollBar
 	SetProperty(Targets,"CanvasSize",UDim2.fromOffset(0,y))
-	
+
 	for i,v in get_valid do
 		if i==1 then continue end
-		
+
 		local target_name = GetProperty(v,"Name")
 		local target_Icon = "rbxasset://studio_svg_textures/Shared/InsertableObjects/"..StudioThemeType.."/Standard/"..GetProperty(v,"ClassName")::string..".png"
 		local SampleTarget = Instance.new("Frame") do
-			SetProperty(SampleTarget,"BackgroundColor3",Color3.new(0.294,0.294,0.294))
+			SetProperty(SampleTarget,"BackgroundColor3",Light_Color)
 			SetProperty(SampleTarget,"BorderSizePixel",0)
 			SetProperty(SampleTarget,"Size",frame_size)
 			SetProperty(SampleTarget,"ZIndex",3)
@@ -1156,7 +1146,7 @@ local function SelectionChangedFunc():()
 			SetProperty(TextLabel_1,"FontFace",SourceSansPro)
 			SetProperty(TextLabel_1,"Position",UDim2.fromOffset(40,0))
 			SetProperty(TextLabel_1,"Size",UDim2_1__u40__1__0)
-			SetProperty(TextLabel_1,"TextSize",20)
+			SetProperty(TextLabel_1,"TextScaled",true)
 			SetProperty(TextLabel_1,"Text",target_name)
 			SetProperty(TextLabel_1,"TextColor3",BrightText)
 			SetProperty(TextLabel_1,"TextXAlignment",Enum.TextXAlignment.Left)
@@ -1165,23 +1155,9 @@ local function SelectionChangedFunc():()
 			BrightText_Stack[TextLabel_1]=true
 			Connection_Trace[SampleTarget]=TextLabel_1
 		end
-		local ClickBox_1 = Instance.new("TextButton") do
-			SetProperty(ClickBox_1,"BackgroundColor3",Color3.new(1,1,1))
-			SetProperty(ClickBox_1,"BackgroundTransparency",1)
-			SetProperty(ClickBox_1,"BorderColor3",Color3.new(0,0,0))
-			SetProperty(ClickBox_1,"FontFace",SourceSansPro)
-			SetProperty(ClickBox_1,"Name","ClickBox")
-			SetProperty(ClickBox_1,"Size",UDim2_one)
-			SetProperty(ClickBox_1,"Text","")
-			SetProperty(ClickBox_1,"TextColor3",Color3.new(0,0,0))
-			SetProperty(ClickBox_1,"TextSize",14)
-			SetProperty(ClickBox_1,"TextTransparency",1)
-			SetProperty(ClickBox_1,"ZIndex",6)
-			SetProperty(ClickBox_1,"Parent",SampleTarget)
-		end
 		--}
 		--}
-		
+
 		new_table[i]=SampleTarget
 	end
 end
@@ -1226,6 +1202,9 @@ ConnectWhenWidgetEnabled()
 
 for i in BrightText_Stack do
 	SetProperty(i,"TextColor3",BrightText)
+end
+for i in Connection_Trace do
+	SetProperty(i,"BackgroundColor3",Light_Color)
 end
 
 ;(GetProperty(plugin,"Unloading")::RBXScriptSignal):Once(function():()

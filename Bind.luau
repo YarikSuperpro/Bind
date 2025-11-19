@@ -1,10 +1,17 @@
 --!strict
 --!optimize 2
 
+
+local Toolbar = plugin:CreateToolbar("Bind")
+local Open_UI_Button = Toolbar:CreateButton("Bind_Weld_Plugin_YS","Open Weld UI","rbxassetid://99241917663573","Open UI")
+local Widget = plugin:CreateDockWidgetPluginGui("Bind_Weld_Plugin_Widget_YS",DockWidgetPluginGuiInfo.new(Enum.InitialDockState.Float,false,false,200,200,50,50))
+
+
 local Selection = game:GetService("Selection")
+local Selection_Set:(ins:{Instance})->()
 local Selection_Get:(Selection:Selection)->{Instance}
 local Instances_temp = {}::{Instance}
-local Selection_Ins = {}::{Instance}
+local Selection_Ins = {}::{BasePart}
 
 --Constants
 local UDim2_one_zero = UDim2.fromScale(1,0)
@@ -51,6 +58,11 @@ local GetPropertyChangedSignal:(ins:Instance,property: string)->RBXScriptSignal
 local Disconnect:(Connection:RBXScriptConnection)->()
 local Destroy:(ins:Instance)->()
 local IsA:(ins:Instance,class:string)->boolean
+local GetPivot:(ins:PVInstance)->CFrame
+local Inverse:(cf:CFrame)->CFrame
+local CFrame_MUL:(cf1:CFrame,cf2:CFrame)->CFrame
+
+--if not for Slection service i could've used plugin tbh
 xpcall(function():()
 	(game::any)[nil]=nil
 end,function():()
@@ -64,6 +76,7 @@ end)
 Connect = (GetProperty(plugin,"Unloading")::any).Connect
 GetPropertyChangedSignal = GetProperty(plugin,"GetPropertyChangedSignal")
 Selection_Get = GetProperty(Selection,"Get")
+Selection_Set = GetProperty(Selection,"Set")
 Destroy = GetProperty(plugin,"Destroy")
 IsA = GetProperty(plugin,"IsA")
 xpcall(function():()
@@ -71,6 +84,15 @@ xpcall(function():()
 end,function():()
 	GetVector2 = debug.info(2,"f")
 end)
+xpcall(function():()
+	return (CFrame.identity::any)*nil
+end,function():()
+	CFrame_MUL = debug.info(2,"f")
+end)
+local temp_ins = Instance.new("Part")
+GetPivot = GetProperty(temp_ins,"GetPivot")
+Inverse = CFrame.identity.Inverse
+Destroy(temp_ins)
 
 local ScrollbarSize = 12
 --initialize
@@ -84,12 +106,109 @@ local Option_ParentWeldToBase:boolean = (_PluginData % 8)>=4
 local Option_NameWeldAsTarget:boolean = (_PluginData % 4)>=2
 local Option_DecentralizeWeld:boolean = (_PluginData % 2)>=1
 
-local Toolbar = plugin:CreateToolbar("Bind")
-local Open_UI_Button = Toolbar:CreateButton("Bind_Weld_Plugin_YS","Open Weld UI","rbxassetid://99241917663573","Open UI")
 SetProperty(Open_UI_Button,"ClickableWhenViewportHidden",true)
-local Widget = plugin:CreateDockWidgetPluginGui("Bind_Weld_Plugin_Widget_YS",DockWidgetPluginGuiInfo.new(Enum.InitialDockState.Float,false,false,200,200,50,50))
 SetProperty(Widget,"Title","Bind (Welding Menu)")
 SetProperty(Widget,"Name","Bind (Welding Menu)")
+--functions
+local Weld_Execute_Connection:RBXScriptConnection
+
+local function weld_WeldConstraint():()
+
+end
+
+local function weld_Regular():()
+	local selection = Selection_Ins
+	if #selection<2 then return end
+	local InsType:string
+	if WeldOption_State==1 then
+		InsType="Motor6D"
+	elseif WeldOption_State==3 then
+		InsType="Weld"
+	elseif WeldOption_State==4 then
+		InsType="ManualWeld"
+	elseif WeldOption_State==5 then
+		InsType="Snap"
+	elseif WeldOption_State==6 then
+		InsType="Glue"
+	elseif WeldOption_State==7 then
+		InsType="RotateV"
+	else
+		InsType="Rotate"
+	end
+	local selection_len = #selection
+	local stack = table.create(selection_len)::{JointInstance|WeldConstraint}
+	if Option_DecentralizeWeld then
+		local _count:number = 1
+		if Option_PivotToOffset then
+			for i=2,selection_len,2 do
+				local base = selection[i-1]::BasePart
+				local v = selection[i]::BasePart
+				local Motor = Instance.new(InsType)::JointInstance
+				SetProperty(Motor,"Part0",base)
+				SetProperty(Motor,"Part1",v)
+				local v_CFrame = GetProperty(v,"CFrame")::CFrame
+				local pivot = CFrame_MUL(Inverse(v_CFrame),GetPivot(v))
+				SetProperty(Motor,"C0",CFrame_MUL(CFrame_MUL(v_CFrame,Inverse(GetProperty(base,"CFrame")::CFrame)),pivot))
+				SetProperty(Motor,"C1",pivot)
+
+				SetProperty(Motor,"Name",(Option_NameWeldAsTarget and GetProperty(v,"Name")::string) or GetProperty(base,"Name")::string)
+				SetProperty(Motor,"Parent",(Option_ParentWeldToBase and base) or v)
+				stack[_count]=Motor
+				_count+=1
+			end
+		else
+			for i=2,selection_len,2 do
+				local base = selection[i-1]::BasePart
+				local v = selection[i]::BasePart
+				local Motor = Instance.new(InsType)::JointInstance
+				SetProperty(Motor,"Part0",base)
+				SetProperty(Motor,"Part1",v)
+				local v_CFrame = GetProperty(v,"CFrame")::CFrame
+				SetProperty(Motor,"C0",CFrame_MUL(v_CFrame,Inverse(GetProperty(base,"CFrame")::CFrame)))
+				SetProperty(Motor,"Name",(Option_NameWeldAsTarget and GetProperty(v,"Name")::string) or GetProperty(base,"Name")::string)
+				SetProperty(Motor,"Parent",(Option_ParentWeldToBase and base) or v)
+				stack[_count]=Motor
+				_count+=1
+			end
+		end
+	else
+		local base = selection[1]::BasePart
+		if Option_PivotToOffset then
+			for i,v in selection do
+				if i==1 then continue end
+				local Motor = Instance.new(InsType)::JointInstance
+				SetProperty(Motor,"Part0",base)
+				SetProperty(Motor,"Part1",v)
+				local v_CFrame = GetProperty(v,"CFrame")::CFrame
+				local pivot = CFrame_MUL(Inverse(v_CFrame),GetPivot(v))
+				SetProperty(Motor,"C0",CFrame_MUL(CFrame_MUL(v_CFrame,Inverse(GetProperty(base,"CFrame")::CFrame)),pivot))
+				SetProperty(Motor,"C1",pivot)
+
+				SetProperty(Motor,"Name",(Option_NameWeldAsTarget and GetProperty(v,"Name")::string) or GetProperty(base,"Name")::string)
+				SetProperty(Motor,"Parent",(Option_ParentWeldToBase and base) or v)
+				stack[i-1]=Motor
+			end
+		else
+			for i,v in selection do
+				if i==1 then continue end
+				local Motor = Instance.new(InsType)::JointInstance
+				SetProperty(Motor,"Part0",base)
+				SetProperty(Motor,"Part1",v)
+				local v_CFrame = GetProperty(v,"CFrame")::CFrame
+				SetProperty(Motor,"C0",CFrame_MUL(v_CFrame,Inverse(GetProperty(base,"CFrame")::CFrame)))
+				SetProperty(Motor,"Name",(Option_NameWeldAsTarget and GetProperty(v,"Name")::string) or GetProperty(base,"Name")::string)
+				SetProperty(Motor,"Parent",(Option_ParentWeldToBase and base) or v)
+				stack[i-1]=Motor
+			end
+		end
+	end
+	if Option_SelectWelds then
+		Selection_Set(Selection,stack)
+	end
+end
+
+
+
 --setup
 
 local Main = Instance.new("Frame") do
@@ -114,6 +233,9 @@ local Weld = Instance.new("TextButton") do
 	SetProperty(Weld,"ZIndex",2)
 	SetProperty(Weld,"Parent",Main)
 end
+local Weld_MouseButton1Click = GetProperty(Weld,"MouseButton1Click")::RBXScriptSignal
+
+
 --[Children] {
 SetProperty(Instance.new("UICorner",Weld),"CornerRadius",UDim2_0_5px)
 local UIStroke = Instance.new("UIStroke") do
@@ -260,6 +382,8 @@ local WO_Motor6D = Instance.new("TextButton") do
 	SetProperty(Instance.new("UICorner",WO_Motor6D),"CornerRadius",UDim2_0_5px)
 	Connect(GetProperty(WO_Motor6D,"MouseButton1Click")::RBXScriptSignal,function():()
 		WeldOption_State = 1
+		Disconnect(Weld_Execute_Connection)
+		Weld_Execute_Connection = Connect(Weld_MouseButton1Click,weld_Regular)
 		SetProperty(WeldOptionsButton,"Text","Motor6D")
 		SetProperty(CancelCorneringEffect,"Visible",false)
 		SetProperty(WeldOptions_Frame,"Visible",false)
@@ -278,6 +402,8 @@ local WO_WeldConstraint = Instance.new("TextButton") do
 	SetProperty(Instance.new("UICorner",WO_WeldConstraint),"CornerRadius",UDim2_0_5px)
 	Connect(GetProperty(WO_WeldConstraint,"MouseButton1Click")::RBXScriptSignal,function():()
 		WeldOption_State = 2
+		Disconnect(Weld_Execute_Connection)
+		Weld_Execute_Connection = Connect(Weld_MouseButton1Click,weld_WeldConstraint)
 		SetProperty(WeldOptionsButton,"Text","WeldConstraint")
 		SetProperty(CancelCorneringEffect,"Visible",false)
 		SetProperty(WeldOptions_Frame,"Visible",false)
@@ -296,6 +422,8 @@ local WO_Weld = Instance.new("TextButton") do
 	SetProperty(Instance.new("UICorner",WO_Weld),"CornerRadius",UDim2_0_5px)
 	Connect(GetProperty(WO_Weld,"MouseButton1Click")::RBXScriptSignal,function():()
 		WeldOption_State = 3
+		Disconnect(Weld_Execute_Connection)
+		Weld_Execute_Connection = Connect(Weld_MouseButton1Click,weld_Regular)
 		SetProperty(WeldOptionsButton,"Text","Weld")
 		SetProperty(CancelCorneringEffect,"Visible",false)
 		SetProperty(WeldOptions_Frame,"Visible",false)
@@ -315,6 +443,8 @@ local WO_ManualWeld = Instance.new("TextButton") do
 	SetProperty(Instance.new("UICorner",WO_ManualWeld),"CornerRadius",UDim2_0_5px)
 	Connect(GetProperty(WO_ManualWeld,"MouseButton1Click")::RBXScriptSignal,function():()
 		WeldOption_State = 4
+		Disconnect(Weld_Execute_Connection)
+		Weld_Execute_Connection = Connect(Weld_MouseButton1Click,weld_Regular)
 		SetProperty(WeldOptionsButton,"Text","ManualWeld")
 		SetProperty(CancelCorneringEffect,"Visible",false)
 		SetProperty(WeldOptions_Frame,"Visible",false)
@@ -334,6 +464,8 @@ local WO_Snap = Instance.new("TextButton") do
 	SetProperty(Instance.new("UICorner",WO_Snap),"CornerRadius",UDim2_0_5px)
 	Connect(GetProperty(WO_Snap,"MouseButton1Click")::RBXScriptSignal,function():()
 		WeldOption_State = 5
+		Disconnect(Weld_Execute_Connection)
+		Weld_Execute_Connection = Connect(Weld_MouseButton1Click,weld_Regular)
 		SetProperty(WeldOptionsButton,"Text","Snap")
 		SetProperty(CancelCorneringEffect,"Visible",false)
 		SetProperty(WeldOptions_Frame,"Visible",false)
@@ -353,6 +485,8 @@ local WO_Glue = Instance.new("TextButton") do
 	SetProperty(Instance.new("UICorner",WO_Glue),"CornerRadius",UDim2_0_5px)
 	Connect(GetProperty(WO_Glue,"MouseButton1Click")::RBXScriptSignal,function():()
 		WeldOption_State = 6
+		Disconnect(Weld_Execute_Connection)
+		Weld_Execute_Connection = Connect(Weld_MouseButton1Click,weld_Regular)
 		SetProperty(WeldOptionsButton,"Text","Glue")
 		SetProperty(CancelCorneringEffect,"Visible",false)
 		SetProperty(WeldOptions_Frame,"Visible",false)
@@ -372,6 +506,8 @@ local WO_RotateV = Instance.new("TextButton") do
 	SetProperty(Instance.new("UICorner",WO_RotateV),"CornerRadius",UDim2_0_5px)
 	Connect(GetProperty(WO_RotateV,"MouseButton1Click")::RBXScriptSignal,function():()
 		WeldOption_State = 7
+		Disconnect(Weld_Execute_Connection)
+		Weld_Execute_Connection = Connect(Weld_MouseButton1Click,weld_Regular)
 		SetProperty(WeldOptionsButton,"Text","RotateV")
 		SetProperty(CancelCorneringEffect,"Visible",false)
 		SetProperty(WeldOptions_Frame,"Visible",false)
@@ -391,6 +527,8 @@ local WO_Rotate = Instance.new("TextButton") do
 	SetProperty(Instance.new("UICorner",WO_Rotate),"CornerRadius",UDim2_0_5px)
 	Connect(GetProperty(WO_Rotate,"MouseButton1Click")::RBXScriptSignal,function():()
 		WeldOption_State = 8
+		Disconnect(Weld_Execute_Connection)
+		Weld_Execute_Connection = Connect(Weld_MouseButton1Click,weld_Regular)
 		SetProperty(WeldOptionsButton,"Text","Rotate")
 		SetProperty(CancelCorneringEffect,"Visible",false)
 		SetProperty(WeldOptions_Frame,"Visible",false)
@@ -739,6 +877,7 @@ SetProperty(L_ParentToBase,"BackgroundColor3",Tab_Color)
 SetProperty(R_NameAsTarget,"BackgroundColor3",Tab_Color)
 SetProperty(R_ChainLink,"BackgroundColor3",Tab_Color)
 
+SetProperty(SelectWelds,"TextColor3",BrightText)
 SetProperty(TextLabel_2,"TextColor3",BrightText)
 SetProperty(TextLabel_3,"TextColor3",BrightText)
 SetProperty(TextLabel_4,"TextColor3",BrightText)
@@ -787,7 +926,7 @@ local StudioThemeType = GetProperty(Theme,"Name")::string
 local gc = Connect(GetProperty(Studio,"ThemeChanged")::RBXScriptSignal,function():()
 	Theme = GetProperty(Studio,"Theme")::StudioTheme
 	StudioThemeType = GetProperty(Theme,"Name")
-	
+
 	Dark = GetColor(Theme,Enum.StudioStyleGuideColor.Dark)
 	BrightText = GetColor(Theme,Enum.StudioStyleGuideColor.BrightText)
 	ScrollBar_Color = GetColor(Theme,Enum.StudioStyleGuideColor.ScrollBar)
@@ -797,7 +936,7 @@ local gc = Connect(GetProperty(Studio,"ThemeChanged")::RBXScriptSignal,function(
 	MainBackground = GetColor(Theme,Enum.StudioStyleGuideColor.MainBackground)
 	Light_Color = GetColor(Theme,Enum.StudioStyleGuideColor.Light)
 	DimmedText_Color = GetColor(Theme,Enum.StudioStyleGuideColor.DimmedText)
-	
+
 	SetProperty(SelectWelds_Button,"BackgroundColor3",DimmedText_Color)
 	SetProperty(ImageButton_2,"BackgroundColor3",DimmedText_Color)
 	SetProperty(ImageButton_3,"BackgroundColor3",DimmedText_Color)
@@ -814,6 +953,7 @@ local gc = Connect(GetProperty(Studio,"ThemeChanged")::RBXScriptSignal,function(
 	SetProperty(R_NameAsTarget,"BackgroundColor3",Tab_Color)
 	SetProperty(R_ChainLink,"BackgroundColor3",Tab_Color)
 
+	SetProperty(SelectWelds,"TextColor3",BrightText)
 	SetProperty(TextLabel_2,"TextColor3",BrightText)
 	SetProperty(TextLabel_3,"TextColor3",BrightText)
 	SetProperty(TextLabel_4,"TextColor3",BrightText)
@@ -854,7 +994,7 @@ local gc = Connect(GetProperty(Studio,"ThemeChanged")::RBXScriptSignal,function(
 	SetProperty(WO_RotateV,"TextColor3",BrightText)
 	SetProperty(WO_Rotate,"BackgroundColor3",Dark)
 	SetProperty(WO_Rotate,"TextColor3",BrightText)
-	
+
 	CurrentSelectionChangeFunction()
 end)
 
@@ -916,7 +1056,7 @@ local function SelectionChangedFunc_Decentralized():()
 		SetProperty(Base,"CanvasSize",UDim2_zero)
 		return
 	end
-	
+
 	local iter_color:number = 1
 	local target_count:number = get_valid_len//2
 	local y = target_count*20
@@ -1048,9 +1188,9 @@ local function SelectionChangedFunc():()
 		SetProperty(Base,"CanvasSize",UDim2_zero)
 		return
 	end
-	
-	
-	
+
+
+
 	SetProperty(Base,"CanvasSize",UDim2_zero)
 	local base = get_valid[1]::BasePart
 	local base_name = GetProperty(base,"Name")
@@ -1226,7 +1366,7 @@ ConnectWhenWidgetEnabled()
 end)
 
 
-
+Weld_Execute_Connection = Connect(Weld_MouseButton1Click,if WeldOption_State==2 then weld_WeldConstraint else weld_Regular)
 
 
 SetProperty(Main,"Parent",Widget)

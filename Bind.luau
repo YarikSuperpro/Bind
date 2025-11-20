@@ -2,11 +2,15 @@
 --!optimize 2
 
 local Toolbar = plugin:CreateToolbar("Bind")
+
 local Open_UI_Button = Toolbar:CreateButton("Bind_Weld_Plugin_YS","Open Weld UI","rbxassetid://99241917663573","Open UI")
 local Widget = plugin:CreateDockWidgetPluginGui("Bind_Weld_Plugin_Widget_YS",DockWidgetPluginGuiInfo.new(Enum.InitialDockState.Float,false,false,200,200,50,50))
 
-
 local Selection = game:GetService("Selection")
+local ChangeHistoryService = game:GetService("ChangeHistoryService")
+
+local TryBeginRecording = ChangeHistoryService.TryBeginRecording
+local FinishRecording = ChangeHistoryService.FinishRecording
 local Selection_Set:(ins:{Instance})->()
 local Selection_Get:(Selection:Selection)->{Instance}
 local Instances_temp = {}::{Instance}
@@ -116,6 +120,8 @@ local function weld_WeldConstraint():()
 	if #selection<2 then return end
 	local selection_len = #selection
 	local stack = table.create(selection_len)::{JointInstance|WeldConstraint}
+	local beggin = TryBeginRecording(ChangeHistoryService,"Welding")::string?
+	
 	if Option_DecentralizeWeld then
 		local _count:number = 1
 		for i=2,selection_len do
@@ -147,6 +153,9 @@ local function weld_WeldConstraint():()
 	if Option_SelectWelds then
 		Selection_Set(Selection,stack)
 	end
+	if beggin then
+		FinishRecording(ChangeHistoryService,beggin,Enum.FinishRecordingOperation.Commit)
+	end
 end
 
 local function weld_Regular():()
@@ -170,6 +179,8 @@ local function weld_Regular():()
 	end
 	local selection_len = #selection
 	local stack = table.create(selection_len)::{JointInstance|WeldConstraint}
+	
+	local beggin = TryBeginRecording(ChangeHistoryService,"Welding")::string?
 	if Option_DecentralizeWeld then
 		local _count:number = 1
 		if Option_PivotToOffset then
@@ -237,6 +248,9 @@ local function weld_Regular():()
 	end
 	if Option_SelectWelds then
 		Selection_Set(Selection,stack)
+	end
+	if beggin then
+		FinishRecording(ChangeHistoryService,beggin,Enum.FinishRecordingOperation.Commit)
 	end
 end
 

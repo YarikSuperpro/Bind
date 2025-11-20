@@ -1,7 +1,6 @@
 --!strict
 --!optimize 2
 
-
 local Toolbar = plugin:CreateToolbar("Bind")
 local Open_UI_Button = Toolbar:CreateButton("Bind_Weld_Plugin_YS","Open Weld UI","rbxassetid://99241917663573","Open UI")
 local Widget = plugin:CreateDockWidgetPluginGui("Bind_Weld_Plugin_Widget_YS",DockWidgetPluginGuiInfo.new(Enum.InitialDockState.Float,false,false,200,200,50,50))
@@ -1053,7 +1052,6 @@ local function Scale_Decentralized_Target():()
 	for i,v in Instances_temp do
 		SetProperty(v,"Size",frame_size)
 	end
-	SetProperty(Targets,"CanvasSize",UDim2.fromOffset(0,y))
 end
 local function Scale_Target():()
 	local y:number = (#Instances_temp-1)*20

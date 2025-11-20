@@ -113,7 +113,41 @@ SetProperty(Widget,"Name","Bind (Welding Menu)")
 local Weld_Execute_Connection:RBXScriptConnection
 
 local function weld_WeldConstraint():()
+	local selection = Selection_Ins
+	if #selection<2 then return end
+	local selection_len = #selection
+	local stack = table.create(selection_len)::{JointInstance|WeldConstraint}
+	if Option_DecentralizeWeld then
+		local _count:number = 1
+		for i=2,selection_len do
+			local base = selection[i-1]::BasePart
+			local v = selection[i]::BasePart
+			local Motor = Instance.new("WeldConstraint")::WeldConstraint
+			SetProperty(Motor,"Part0",base)
+			SetProperty(Motor,"Part1",v)
 
+			SetProperty(Motor,"Name",(Option_NameWeldAsTarget and GetProperty(v,"Name")::string) or GetProperty(base,"Name")::string)
+			SetProperty(Motor,"Parent",(Option_ParentWeldToBase and base) or v)
+			stack[_count]=Motor
+			_count+=1
+		end
+	else
+		local base = selection[1]::BasePart
+		for i,v in selection do
+			if i==1 then continue end
+			local Motor = Instance.new("WeldConstraint")::WeldConstraint
+			SetProperty(Motor,"Part0",base)
+			SetProperty(Motor,"Part1",v)
+
+			SetProperty(Motor,"Name",(Option_NameWeldAsTarget and GetProperty(v,"Name")::string) or GetProperty(base,"Name")::string)
+			SetProperty(Motor,"Parent",(Option_ParentWeldToBase and base) or v)
+			stack[i-1]=Motor
+		end
+	end
+
+	if Option_SelectWelds then
+		Selection_Set(Selection,stack)
+	end
 end
 
 local function weld_Regular():()
@@ -140,7 +174,7 @@ local function weld_Regular():()
 	if Option_DecentralizeWeld then
 		local _count:number = 1
 		if Option_PivotToOffset then
-			for i=2,selection_len,2 do
+			for i=2,selection_len do
 				local base = selection[i-1]::BasePart
 				local v = selection[i]::BasePart
 				local Motor = Instance.new(InsType)::JointInstance
@@ -157,7 +191,7 @@ local function weld_Regular():()
 				_count+=1
 			end
 		else
-			for i=2,selection_len,2 do
+			for i=2,selection_len do
 				local base = selection[i-1]::BasePart
 				local v = selection[i]::BasePart
 				local Motor = Instance.new(InsType)::JointInstance
@@ -1008,7 +1042,7 @@ end
 --also scales base btw
 local function Scale_Decentralized_Target():()
 	local Instances_temp_len = #Instances_temp
-	local target_count:number = Instances_temp_len//2
+	local target_count:number = Instances_temp_len-1
 	local y = target_count*20
 	local frame_y = GetVector2(GetProperty(Targets,"AbsoluteSize")::Vector2,"Y")
 	local frame_size = if frame_y<y then UDim2_1__u12__0__20 else UDim2_1__u12__0__20_NoScrollBar
@@ -1049,7 +1083,6 @@ local function SelectionChangedFunc_Decentralized():()
 	local new_table = table.create(#get_valid)
 
 
-	Instances_temp=new_table
 	local get_valid_len = #get_valid
 	if #get<1 or get_valid_len<1 then
 		SetProperty(Targets,"CanvasSize",UDim2_zero)
@@ -1058,7 +1091,7 @@ local function SelectionChangedFunc_Decentralized():()
 	end
 
 	local iter_color:number = 1
-	local target_count:number = get_valid_len//2
+	local target_count:number = get_valid_len-1
 	local y = target_count*20
 	local frame_y = GetVector2(GetProperty(Targets,"AbsoluteSize")::Vector2,"Y")
 	local frame_size = if frame_y<y then UDim2_1__u12__0__20 else UDim2_1__u12__0__20_NoScrollBar
@@ -1067,8 +1100,8 @@ local function SelectionChangedFunc_Decentralized():()
 	SetProperty(Targets,"CanvasSize",sz_temp)
 	SetProperty(Base,"CanvasSize",sz_temp)
 
-
-	for i=2,get_valid_len,2 do
+	local ref:number = 1
+	for i=2,get_valid_len do
 		local _i = i-1
 		local base,target = get_valid[_i],get_valid[i]
 		local color = nextColor(iter_color)
@@ -1116,7 +1149,7 @@ local function SelectionChangedFunc_Decentralized():()
 		end
 		--}
 		--}
-		new_table[_i]=SampleBase
+		new_table[ref]=SampleBase
 		local target_name = GetProperty(target,"Name")
 		local target_Icon = "rbxasset://studio_svg_textures/Shared/InsertableObjects/"..StudioThemeType.."/Standard/"..GetProperty(target,"ClassName")::string..".png"
 		local SampleTarget = Instance.new("Frame") do
@@ -1162,8 +1195,10 @@ local function SelectionChangedFunc_Decentralized():()
 		--}
 		--}
 
-		new_table[i]=SampleTarget
+		new_table[ref+1]=SampleTarget
+		ref+=2
 	end
+	Instances_temp=new_table
 	--Scale_Decentralized_Target()
 end
 
@@ -1181,7 +1216,6 @@ local function SelectionChangedFunc():()
 	local new_table = table.create(#get_valid)
 
 
-	Instances_temp=new_table
 	local get_valid_len = #get_valid
 	if #get<1 or get_valid_len<1 then
 		SetProperty(Targets,"CanvasSize",UDim2_zero)
@@ -1295,6 +1329,7 @@ local function SelectionChangedFunc():()
 
 		new_table[i]=SampleTarget
 	end
+	Instances_temp=new_table
 end
 
 local Targets_AbsoluteSize_Signal = GetPropertyChangedSignal(Targets,"AbsoluteSize")::RBXScriptSignal

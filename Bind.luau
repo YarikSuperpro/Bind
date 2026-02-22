@@ -4,7 +4,7 @@
 local Toolbar = plugin:CreateToolbar("Bind")
 
 local Open_UI_Button = Toolbar:CreateButton("Bind_Weld_Plugin_YS","Open Weld UI","rbxassetid://99241917663573","Open UI")
-local Widget = plugin:CreateDockWidgetPluginGui("Bind_Weld_Plugin_Widget_YS",DockWidgetPluginGuiInfo.new(Enum.InitialDockState.Float,false,false,200,200,50,50))
+local Widget = plugin:CreateDockWidgetPluginGuiAsync("Bind_Weld_Plugin_Widget_YS",DockWidgetPluginGuiInfo.new(Enum.InitialDockState.Float,false,false,200,200,50,50))
 
 local Selection = game:GetService("Selection")
 local ChangeHistoryService = game:GetService("ChangeHistoryService")
@@ -190,10 +190,11 @@ local function weld_Regular():()
 				local Motor = Instance.new(InsType)::JointInstance
 				SetProperty(Motor,"Part0",base)
 				SetProperty(Motor,"Part1",v)
-				local v_CFrame = GetProperty(v,"CFrame")::CFrame
-				local pivot = CFrame_MUL(Inverse(v_CFrame),GetPivot(v))
-				SetProperty(Motor,"C0",CFrame_MUL(CFrame_MUL(v_CFrame,Inverse(GetProperty(base,"CFrame")::CFrame)),pivot))
-				SetProperty(Motor,"C1",pivot)
+				--local v_CFrame = GetProperty(v,"CFrame")::CFrame
+				--local pivot = CFrame_MUL(Inverse(v_CFrame),GetPivot(v))
+				local pivot = GetPivot(v)
+				SetProperty(Motor,"C0",CFrame_MUL(Inverse(GetProperty(base,"CFrame")::CFrame),pivot))
+				SetProperty(Motor,"C1",GetProperty(v,"PivotOffset"))
 
 				SetProperty(Motor,"Name",(Option_NameWeldAsTarget and GetProperty(v,"Name")::string) or GetProperty(base,"Name")::string)
 				SetProperty(Motor,"Parent",(Option_ParentWeldToBase and base) or v)
@@ -217,16 +218,18 @@ local function weld_Regular():()
 		end
 	else
 		local base = selection[1]::BasePart
+		local inv_base = Inverse(GetProperty(base,"CFrame")::CFrame)
 		if Option_PivotToOffset then
 			for i,v in selection do
 				if i==1 then continue end
 				local Motor = Instance.new(InsType)::JointInstance
 				SetProperty(Motor,"Part0",base)
 				SetProperty(Motor,"Part1",v)
-				local v_CFrame = GetProperty(v,"CFrame")::CFrame
-				local pivot = CFrame_MUL(Inverse(v_CFrame),GetPivot(v))
-				SetProperty(Motor,"C0",CFrame_MUL(CFrame_MUL(v_CFrame,Inverse(GetProperty(base,"CFrame")::CFrame)),pivot))
-				SetProperty(Motor,"C1",pivot)
+				--local v_CFrame = GetProperty(v,"CFrame")::CFrame
+				--local pivot = CFrame_MUL(Inverse(v_CFrame),GetPivot(v))
+				local pivot = GetPivot(v)
+				SetProperty(Motor,"C0",CFrame_MUL(inv_base,pivot))
+				SetProperty(Motor,"C1",GetProperty(v,"PivotOffset"))
 
 				SetProperty(Motor,"Name",(Option_NameWeldAsTarget and GetProperty(v,"Name")::string) or GetProperty(base,"Name")::string)
 				SetProperty(Motor,"Parent",(Option_ParentWeldToBase and base) or v)
